@@ -12,6 +12,11 @@ Japanese Word Hero
 起動方法:
   python で WordHero_jp.pyを実行。もしくは、KotobaHero（実行ファイル、シェルスクリプト）を実行。
 
+遊び方:
+  マウスでクリックしながら文字をなぞる。
+  単語ができたらうれしい。
+
+
 辞書:
   辞書ファイルはdictionary/mydicth
   中身は一行に一単語をひらがなで。
