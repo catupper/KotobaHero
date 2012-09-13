@@ -8,7 +8,7 @@ from random import randint as rr
 WIDTH = 800
 HEIGHT = 700
 BOARD_SIZE = 550
-PLAY_TIME = 100
+PLAY_TIME = 1
 SCORE_TIME = 20
 WHITE = (255, 255, 255)
 GREEN = (200, 100, 10)
@@ -84,8 +84,7 @@ def sixteenmap():
 sx=sixteenmap()
 
 def wordpoint(word):
-    return sum(point[romaji.index(x)] for x in word)
-
+    return sum(point[romaji.index(x)] for x in word) + (len(word)  ** 5) / 150
 
 def mkwordlist(board):
     longest = 0
@@ -196,7 +195,7 @@ def play(board, countdown):
         if mouse_pressed == True and mouse_press == False or checking:
             p=search(ind_word(board, nowword), used)
             if p == 1:
-                foundword = [["".join(board[x] for x in  nowword)]]+foundword
+                foundword = [["".join(board[x] for x in  nowword)]] + foundword
             for x in xrange(16):
                 if square[x].mode == 1:
                     if p == 1:
@@ -303,20 +302,20 @@ class swit(pygame.sprite.Sprite):
         self.color = (0, 0, 0)
         self.norm = pygame.transform.scale(
                      pygame.image.load("images/%s.png"%self.char),
-                     (size,size))
+                     (size - 4,size - 4))
         self.blue = pygame.transform.scale(
                      pygame.image.load("images/%sBlue.png"%self.char),
-                     (size, size))
+                     (size - 4, size - 4))
         self.green = pygame.transform.scale(
                       pygame.image.load("images/%sGreen.png"%self.char),
-                      (size, size))
+                      (size - 4, size - 4))
         self.yellow = pygame.transform.scale(
                        pygame.image.load("images/%sYello.png"%self.char),
-                       (size, size))
+                       (size - 4, size - 4))
         self.red = pygame.transform.scale(
                     pygame.image.load("images/%sRed.png"%self.char),
-                    (size, size))
-        self.rect  = pygame.Rect(x * size, y * size , size-20, size-20)
+                    (size - 4, size - 4))
+        self.rect  = pygame.Rect(x * size + 2, y * size + 2, size, size)
         self.mode  = 0
         self.point = point
         self.size  = lambda x: x * size / 150
@@ -330,9 +329,11 @@ class swit(pygame.sprite.Sprite):
         if(self.mode % 5 == 4): self.image = self.yellow    #wrong
 
         if(self.mode > 1): self.mode = max(self.mode-5, 0)
+
         self.image.blit(
             numfont[self.size(2)].render(str(self.point), False, WHITE),
             (self.size(10),self.size(120)))
+
         if(self.used > 0):
             pygame.draw.circle(self.image, GREEN,
                                (self.size(120), self.size(140)),
