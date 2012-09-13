@@ -5,14 +5,23 @@ import pygame
 from pygame.locals import *
 from random import randint as rr
 
-
-Board_size = 550
-PLAY_TIME  = 100
+WIDTH = 800
+HEIGHT = 700
+BOARD_SIZE = 550
+PLAY_TIME = 100
 SCORE_TIME = 20
-Dictfile   = "dictionary/mydicth"
-romaji     = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
-charo      = [x+y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
-point      = [rr(1, 9) for x in romaji]
+WHITE = (255, 255, 255)
+GREEN = (200, 100, 10)
+RED = (100, 200, 10)
+YAMABUKI = (200, 200, 100)
+DARK_BLUE = (200, 200, 255)
+SKY_BLUE = (100, 100, 255)
+BLACK = (0, 0, 0)
+BACK_GROUND = BLACK
+Dictfile = "dictionary/mydicth"
+romaji = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
+charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
+point = [rr(1, 9) for x in romaji]
 
 
 def quitcheck():
@@ -30,9 +39,9 @@ def makedic(filename):
         x = x.strip()
         if len(x.decode('euc_jp')) > 1 :
             res.add(x.decode('euc_jp'))
-    return list(res)
+    return sorted(list(res))
 
-WORDLIST = sorted( makedic(Dictfile) )
+WORDLIST = makedic(Dictfile)
 
 
 def search(word, used = None):
@@ -69,7 +78,7 @@ def sixteenmap():
                 for j in xrange(-1, 2):
                     if i == j == 0:continue
                     if 0 <= x+i < 4 and 0 <= y+j < 4:
-                        res[x*4+y].append((x+i)*4+y+j)
+                        res[x * 4 + y].append((x + i) * 4 + y + j)
     return res
 
 sx=sixteenmap()
@@ -80,11 +89,11 @@ def wordpoint(word):
 
 def mkwordlist(board):
     longest = 0
-    two_used = [0]*16
-    used = [False]*16
+    two_used = [0] * 16
+    used = [False] * 16
     res = []
     fm = sixteenmap()
-    def dfs(x,word,index):
+    def dfs(x, word, index):
         p = search(word)
         ok = 0
         if p == 0:return ok
@@ -103,7 +112,7 @@ def mkwordlist(board):
     if len(res) == 0:return res,False
     ret = [[x for x in res if y in x[1]]for y in xrange(16)] + [res]
     for x in res:
-        longest = max(longest,len(x[0]))
+        longest = max(longest, len(x[0]))
     for x in xrange(17):
         if(ret[x] == []):continue
         last = ret[x][0][0]
@@ -123,12 +132,15 @@ def randhi():
     return romaji[rr(0, len(romaji)-1)]
 
 def putword(board, word):
-    screen.blit(sysfont[6].render(ind_word(board,word),False,(255,255,255)),(10,550))    
+    screen.blit(sysfont[6].render(ind_word(board, word), False, WHITE)
+                                  ,(10,550))
+
 def makeboard():
     while True:
         board=[randhi() for x in xrange(16)]
-        wordlist,longest=mkwordlist(board)
-        if all(len(x) > 2 for x in wordlist) and longest>5:return board,wordlist
+        wordlist, longest = mkwordlist(board)
+        if all(len(x) > 2 for x in wordlist) and longest>5:
+            return board, wordlist
 
 def ind_word(board,indexes):
     return "".join(board[x] for x in indexes)
@@ -137,43 +149,52 @@ def timer(time):
     col = (100,100,255)
     if time < 10:
         col = (255,50,50)
-    screen.blit(sysfont[6].render(u"残り%d秒"%time,False,col),(300,610))    
+    screen.blit(sysfont[6].render(u"残り%d秒"%time, False, col),
+                (300, 610))    
 
 def pointer(points):
-    screen.blit(sysfont[2].render(u"%04d点"%points,False,(200,200,100)),(550,100))
+    screen.blit(sysfont[2].render(u"%04d点"%points, False, YAMABUKI),
+                (550, 100))
     
     
 
-def outputwords(words,pos,gap,size,color,limit=600):
-    height=0
-    k=0
-    while k<len(words) and pos[1]+height<limit:
+def outputwords(words, pos, gap, size, color, limit=600):
+    height = 0
+    k = 0
+    while k < len(words) and pos[1] + height < limit:
         if words[k][0] == "Bonus":
-            screen.blit(sysfont[size].render(words[k][0]+" "+"%dpt"%words[k][1],False,(255,100+words[k][1],100)),(pos[0],pos[1]+height))
+            screen.blit(
+                sysfont[size].render("%s %dpt" % (words[k][0],words[k][1]),
+                                     False, (255, 100 + words[k][1], 100)),
+            (pos[0], pos[1]+height))
         else:
-            screen.blit(sysfont[size].render(words[k][0]+" "+"%dpt"%wordpoint(words[k][0]),False,color),(pos[0],pos[1]+height))
-        height += size*10+gap
+            screen.blit(
+                sysfont[size].render(
+                    "%s %dpt"%(words[k][0], wordpoint(words[k][0])),
+                    False, color)
+                ,(pos[0],pos[1]+height))
+        height += size * 10 + gap
         k += 1
 
 def play(board, countdown):
     nowword = []
     foundword = []
     mouse_pressed = False
-    square = [swit(x/4,x%4,board[x],point[romaji.index(board[x])]) for x in xrange(16)]
-    used = [False]*len(WORDLIST)
+    square = [swit(x / 4, x % 4, board[x], point[romaji.index(board[x])]) for x in xrange(16)]
+    used = [False] * len(WORDLIST)
     checking = False
     countdown *= 60
     nowpoint = 0
     bonus1 = False
     bonus2 = False
     while countdown:
-        screen.fill((0,0,0))
+        screen.fill(BACK_GROUND)
         clock.tick(60)
         countdown -= 1
-        timer(countdown/60)
+        timer(countdown / 60)
         mouse_press=pygame.mouse.get_pressed()[0]
         if mouse_pressed == True and mouse_press == False or checking:
-            p=search(ind_word(board,nowword),used)
+            p=search(ind_word(board, nowword), used)
             if p == 1:
                 foundword = [["".join(board[x] for x in  nowword)]]+foundword
             for x in xrange(16):
@@ -200,13 +221,13 @@ def play(board, countdown):
                 if 0 <= x < 4 and 0 <= y < 4:
                     if 25 < xx < 125 and 25 < yy < 125:
                         if square[x*4+y].mode == 0:
-                            while len(nowword)>0 and x*4+y not in sx[nowword[-1]]:
+                            while len(nowword) > 0 and x * 4 + y not in sx[nowword[-1]]:
                                 square[nowword[-1]].mode = 0
                                 del nowword[-1]                
-                            square[x*4+y].mode = 1
-                            nowword.append(x*4+y)
-                        elif square[x*4+y].mode == 1:
-                            if len(nowword)>1 and nowword[-2] == x*4+y:
+                            square[x * 4 + y].mode = 1
+                            nowword.append(x * 4 + y)
+                        elif square[x * 4 + y].mode == 1:
+                            if len(nowword) > 1 and nowword[-2] == x * 4 + y:
                                 square[nowword[-1]].mode = 0
                                 del nowword[-1]
                 else:
@@ -217,20 +238,20 @@ def play(board, countdown):
             else:
                 bonus1 = True
                 nowpoint += 25
-                foundword = [["Bonus",25]]+foundword
+                foundword = [["Bonus", 25]] + foundword
         if bonus1 and not bonus2:
             for x in xrange(16):
                 if square[x].used == 1:break
             else:
                 bonus2 = True
                 nowpoint += 100
-                foundword = [["Bonus",100]]+foundword
+                foundword = [["Bonus", 100]] + foundword
         for x in xrange(16):
             square[x].update()
             square[x].draw(screen)
         pointer(nowpoint)
         putword(board, nowword)
-        outputwords(foundword, (550,150), 10, 2, (100,100,255))
+        outputwords(foundword, (550, 150), 10, 2, SKY_BLUE)
         pygame.display.update()
         quitcheck()
     return nowpoint
@@ -238,27 +259,27 @@ def play(board, countdown):
 
 
 def score(board, nowlist, points, countdown):
-    square = [swit(x/4, x%4, board[x], point[romaji.index(board[x])], 50) for x in xrange(16)]
+    square = [swit(x / 4, x % 4, board[x], point[romaji.index(board[x])], 50) for x in xrange(16)]
     countdown *= 60
     selected = 16
     mouse_pressed = False
     while countdown:
-        screen.fill((0,0,0))
+        screen.fill(BACK_GROUND)
         clock.tick(60)
         countdown -= 1
-        timer(countdown/60)
+        timer(countdown / 60)
         mouse_press = pygame.mouse.get_pressed()[0]
         if mouse_pressed and not mouse_press:
             x,y = pygame.mouse.get_pos()       
             x /= 50
             y /= 50
             if 0 <= x < 4 and 0 <= y < 4:
-                if square[x*4 + y].mode == -3:
+                if square[x * 4 + y].mode == -3:
                     selected = 16
-                    square[x*4 + y].mode = 0
+                    square[x * 4 + y].mode = 0
                 else:
-                    selected = x*4 + y
-                    square[x*4+y].mode = -3
+                    selected = x * 4 + y
+                    square[x * 4 + y].mode = -3
                     for j in xrange(16):
                         if j != x*4+y:
                             square[j].mode = 0
@@ -266,24 +287,35 @@ def score(board, nowlist, points, countdown):
         for x in xrange(16):
             square[x].update()
             square[x].draw(screen)
-        outputwords(nowlist[selected], (240,100), 10, 2, (200,200,100))
-        screen.blit(numfont[3].render("%dpt"%points, False, (200,200,255)), (20,220))
+        outputwords(nowlist[selected], (240,100), 10, 2, YAMABUKI)
+        screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE), 
+                    (20,220))
         quitcheck()
         pygame.display.flip()
         
 
 
 class swit(pygame.sprite.Sprite):
-    def __init__ (self,x,y,char,point,size = Board_size / 4):
+    def __init__ (self,x,y,char,point,size = BOARD_SIZE / 4):
         pygame.sprite.Sprite.__init__(self)
-        self.used  = 0
-	self.char  = charo[romaji.index(char)]
+        self.used = 0
+	self.char = charo[romaji.index(char)]
         self.color = (0, 0, 0)
-        self.norm  = pygame.transform.scale(pygame.image.load("images/"+ self.char +".png") ,(size,size) )
-        self.blue  = pygame.transform.scale(pygame.image.load("images/"+ self.char +"Blue.png") ,(size,size) )
-        self.green = pygame.transform.scale(pygame.image.load("images/"+ self.char +"Green.png") ,(size,size) )
-        self.yellow= pygame.transform.scale(pygame.image.load("images/"+ self.char +"Yello.png") ,(size,size) )
-        self.red   = pygame.transform.scale(pygame.image.load("images/"+ self.char +"Red.png") ,(size,size) )
+        self.norm = pygame.transform.scale(
+                     pygame.image.load("images/%s.png"%self.char),
+                     (size,size))
+        self.blue = pygame.transform.scale(
+                     pygame.image.load("images/%sBlue.png"%self.char),
+                     (size, size))
+        self.green = pygame.transform.scale(
+                      pygame.image.load("images/%sGreen.png"%self.char),
+                      (size, size))
+        self.yellow = pygame.transform.scale(
+                       pygame.image.load("images/%sYello.png"%self.char),
+                       (size, size))
+        self.red = pygame.transform.scale(
+                    pygame.image.load("images/%sRed.png"%self.char),
+                    (size, size))
         self.rect  = pygame.Rect(x * size, y * size , size-20, size-20)
         self.mode  = 0
         self.point = point
@@ -291,16 +323,24 @@ class swit(pygame.sprite.Sprite):
         self.image = self.norm
     
     def update(self):
-        if(self.mode   == 0): self.image = self.norm      #Nothing
-        if(self.mode   == 1): self.image = self.blue      #selected
-        if(self.mode%5 == 2): self.image = self.green     #correctword
-        if(self.mode%5 == 3): self.image = self.red       #wrong
-        if(self.mode%5 == 4): self.image = self.yellow    #wrong
+        if(self.mode == 0): self.image = self.norm      #Nothing
+        if(self.mode == 1): self.image = self.blue      #selected
+        if(self.mode % 5 == 2): self.image = self.green     #correctword
+        if(self.mode % 5 == 3): self.image = self.red       #wrong
+        if(self.mode % 5 == 4): self.image = self.yellow    #wrong
 
         if(self.mode > 1): self.mode = max(self.mode-5, 0)
-        self.image.blit(numfont[self.size(2)].render(str(self.point),False,(255,255,255)),(self.size(10),self.size(120)))
-        if(self.used > 0):pygame.draw.circle(self.image,(200,100,9),(self.size(120),self.size(140)),self.size(4))
-        if(self.used > 1):pygame.draw.circle(self.image,(100,200,9),(self.size(130),self.size(140)),self.size(4))
+        self.image.blit(
+            numfont[self.size(2)].render(str(self.point), False, WHITE),
+            (self.size(10),self.size(120)))
+        if(self.used > 0):
+            pygame.draw.circle(self.image, GREEN,
+                               (self.size(120), self.size(140)),
+                               self.size(4))
+        if(self.used > 1):
+            pygame.draw.circle(self.image, RED,
+                               (self.size(130), self.size(140)),
+                               self.size(4))
 
 
 
@@ -314,12 +354,12 @@ class swit(pygame.sprite.Sprite):
 def main():
     global screen,sysfont,numfont,Square_size,clock
     pygame.init()
-    screen = pygame.display.set_mode( (800,700) )
+    screen = pygame.display.set_mode( (WIDTH, HEIGHT) )
     pygame.display.set_caption("Kotoba Hero")
     sysfont =[ pygame.font.Font("font/ume-tgc5.ttf", x) for x in xrange(10, 200, 10)]
     numfont = [ pygame.font.Font("font/ipag.ttf", x ) for x in xrange(10, 200, 10)]
     clock = pygame.time.Clock()
-    Square_size = Board_size / 4
+    Square_size = BOARD_SIZE / 4
     while True:
         board,lists = makeboard()
         playpoint   = play(board, countdown = PLAY_TIME)
@@ -327,4 +367,5 @@ def main():
 
 
 
-main()
+if __name__ == "__main__" :
+    main()
