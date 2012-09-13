@@ -8,7 +8,7 @@ from random import randint as rr
 WIDTH = 800
 HEIGHT = 700
 BOARD_SIZE = 550
-PLAY_TIME = 1
+PLAY_TIME = 100
 SCORE_TIME = 20
 WHITE = (255, 255, 255)
 GREEN = (200, 100, 10)
