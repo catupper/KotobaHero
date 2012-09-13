@@ -1,0 +1,4 @@
+KotobaHero
+==========
+
+Japanese Word Hero
