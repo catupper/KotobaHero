@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import pygame
+import threading
+import Queue
 from pygame.locals import *
 from random import randint as rr
+
 
 WIDTH = 800
 HEIGHT = 700
@@ -134,12 +137,16 @@ def putword(board, word):
     screen.blit(sysfont[6].render(ind_word(board, word), False, WHITE)
                                   ,(10,550))
 
-def makeboard():
+def makeboard(q=None):
     while True:
         board=[randhi() for x in xrange(16)]
         wordlist, longest = mkwordlist(board)
         if all(len(x) > 2 for x in wordlist) and longest>5:
-            return board, wordlist
+            if q != None:
+                q.put([board, wordlist])
+                return
+            else:
+                return board, wordlist
 
 def ind_word(board,indexes):
     return "".join(board[x] for x in indexes)
@@ -361,10 +368,15 @@ def main():
     numfont = [ pygame.font.Font("font/ipag.ttf", x ) for x in xrange(10, 200, 10)]
     clock = pygame.time.Clock()
     Square_size = BOARD_SIZE / 4
+    board,lists = makeboard()
+    q = Queue.Queue()
     while True:
-        board,lists = makeboard()
-        playpoint   = play(board, countdown = PLAY_TIME)
-        score(board, lists, playpoint, countdown = SCORE_TIME)
+        p = threading.Thread(target=makeboard, args=(q,))
+        p.start()
+        playpoint = play(board, PLAY_TIME)
+        score(board, lists, playpoint, SCORE_TIME)
+        p.join(5)
+        board, lists = q.get()
 
 
 
