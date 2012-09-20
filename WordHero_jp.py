@@ -4,6 +4,7 @@
 import pygame
 import threading
 import Queue
+from time import time as get_time
 from pygame.locals import *
 from random import randint as rr
 
@@ -11,7 +12,7 @@ from random import randint as rr
 WIDTH = 800
 HEIGHT = 700
 BOARD_SIZE = 550
-PLAY_TIME = 100
+PLAY_TIME = 10
 SCORE_TIME = 20
 WHITE = (255, 255, 255)
 GREEN = (200, 100, 10)
@@ -40,7 +41,7 @@ def makedic(filename):
     res = set()
     for x in f:
         x = x.strip()
-        if len(x.decode('euc_jp')) > 1 :
+        if len(x.decode('euc_jp')) > 2 :
             res.add(x.decode('euc_jp'))
     return sorted(list(res))
 
@@ -152,6 +153,7 @@ def ind_word(board,indexes):
     return "".join(board[x] for x in indexes)
 
 def timer(time):
+    time = int( time - get_time() )
     col = (100,100,255)
     if time < 10:
         col = (255,50,50)
@@ -189,15 +191,15 @@ def play(board, countdown):
     square = [swit(x / 4, x % 4, board[x], point[romaji.index(board[x])]) for x in xrange(16)]
     used = [False] * len(WORDLIST)
     checking = False
-    countdown *= 60
+    finish_time = get_time() + countdown 
     nowpoint = 0
     bonus1 = False
     bonus2 = False
-    while countdown:
+    while get_time() < finish_time:
         screen.fill(BACK_GROUND)
         clock.tick(60)
         countdown -= 1
-        timer(countdown / 60)
+        timer(finish_time)
         mouse_press=pygame.mouse.get_pressed()[0]
         if mouse_pressed == True and mouse_press == False or checking:
             p=search(ind_word(board, nowword), used)
@@ -260,20 +262,21 @@ def play(board, countdown):
         outputwords(foundword, (550, 150), 10, 2, SKY_BLUE)
         pygame.display.update()
         quitcheck()
-    return nowpoint
+    return nowpoint, foundword
 
 
 
-def score(board, nowlist, points, countdown):
+def score(board, nowlist, points, countdown, foundword):
     square = [swit(x / 4, x % 4, board[x], point[romaji.index(board[x])], 50) for x in xrange(16)]
-    countdown *= 60
+    finish_time = get_time() + countdown
     selected = 16
     mouse_pressed = False
-    while countdown:
+    foundword.sort(key = lambda x : wordpoint(x[0]),reverse = True)
+    while get_time() < finish_time:
         screen.fill(BACK_GROUND)
         clock.tick(60)
         countdown -= 1
-        timer(countdown / 60)
+        timer(finish_time)
         mouse_press = pygame.mouse.get_pressed()[0]
         if mouse_pressed and not mouse_press:
             x,y = pygame.mouse.get_pos()       
@@ -294,7 +297,8 @@ def score(board, nowlist, points, countdown):
             square[x].update()
             square[x].draw(screen)
         outputwords(nowlist[selected], (240,100), 10, 2, YAMABUKI)
-        screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE), 
+        outputwords(foundword, (20,280), 10, 1, YAMABUKI)
+        screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE),
                     (20,220))
         quitcheck()
         pygame.display.flip()
@@ -373,8 +377,8 @@ def main():
     while True:
         p = threading.Thread(target=makeboard, args=(q,))
         p.start()
-        playpoint = play(board, PLAY_TIME)
-        score(board, lists, playpoint, SCORE_TIME)
+        playpoint, foundword = play(board, PLAY_TIME)
+        score(board, lists, playpoint, SCORE_TIME, foundword)
         p.join(5)
         board, lists = q.get()
 
