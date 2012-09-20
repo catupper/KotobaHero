@@ -33,5 +33,8 @@ Japanese Word Hero
   BOARD_SIZE : 文字盤（4*4）の大きさ。ひとつのひらがなの大きさではない。  
   PLAY_TIME : 制限時間
   SCORE_TIME : 単語、スコア表示の時間
+  LEAST_LEN : 単語の最低文字数
+  LONGEST_LEN : すくなくともひとつはこれ以上の長さの単語がある
+  LEAST_BONUS : 各ひらがなが使われる回数の下限
 　その他色 : RGBのタプルで表現。
 　

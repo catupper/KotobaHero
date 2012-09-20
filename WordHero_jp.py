@@ -11,8 +11,11 @@ from random import randint as rr
 
 WIDTH = 800
 HEIGHT = 700
+LEAST_LEN = 3
 BOARD_SIZE = 550
-PLAY_TIME = 10
+LEAST_BONUS = 2
+LONGEST_LEN = 5
+PLAY_TIME = 100
 SCORE_TIME = 20
 WHITE = (255, 255, 255)
 GREEN = (200, 100, 10)
@@ -41,7 +44,7 @@ def makedic(filename):
     res = set()
     for x in f:
         x = x.strip()
-        if len(x.decode('euc_jp')) > 2 :
+        if len(x.decode('euc_jp')) >= LEAST_LEN :
             res.add(x.decode('euc_jp'))
     return sorted(list(res))
 
@@ -142,7 +145,7 @@ def makeboard(q=None):
     while True:
         board=[randhi() for x in xrange(16)]
         wordlist, longest = mkwordlist(board)
-        if all(len(x) > 2 for x in wordlist) and longest>5:
+        if all(len(x) >= LEAST_BONUS for x in wordlist) and longest >= LONGEST_LEN:
             if q != None:
                 q.put([board, wordlist])
                 return
