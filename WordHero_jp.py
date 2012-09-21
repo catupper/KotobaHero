@@ -15,7 +15,7 @@ LEAST_LEN = 3
 BOARD_SIZE = 550
 LEAST_BONUS = 2
 LONGEST_LEN = 6
-PLAY_TIME = 100
+PLAY_TIME = 10
 SCORE_TIME = 20
 WHITE = (255, 255, 255)
 GREEN = (200, 100, 10)
@@ -23,6 +23,7 @@ RED = (100, 200, 10)
 YAMABUKI = (200, 200, 100)
 DARK_BLUE = (200, 200, 255)
 SKY_BLUE = (100, 100, 255)
+BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 BACK_GROUND = BLACK
 Dictfile = "dictionary/mydicth"
@@ -169,7 +170,7 @@ def pointer(points):
     
     
 
-def outputwords(words, pos, gap, size, color, limit=600):
+def outputwords(words, pos, gap, size, color, limit=600, used = None):
     height = 0
     k = 0
     while k < len(words) and pos[1] + height < limit:
@@ -179,11 +180,17 @@ def outputwords(words, pos, gap, size, color, limit=600):
                                      False, (255, 100 + words[k][1], 100)),
             (pos[0], pos[1]+height))
         else:
+            if(used != None and words[k][0] in used):
+                colors = SKY_BLUE
+            else:
+                colors = color
             screen.blit(
                 sysfont[size].render(
                     "%s %dpt"%(words[k][0], wordpoint(words[k][0])),
-                    False, color)
+                    False, colors)
                 ,(pos[0],pos[1]+height))
+
+                    
         height += size * 10 + gap
         k += 1
 
@@ -300,8 +307,8 @@ def score(board, nowlist, points, countdown, foundword):
         for x in xrange(16):
             square[x].update()
             square[x].draw(screen)
-        outputwords(nowlist[selected], (240,100), 10, 2, YAMABUKI)
-        outputwords(foundword, (20,280), 10, 1, YAMABUKI)
+        outputwords(nowlist[selected], (240,100), 10, 2, YAMABUKI, used = map(lambda x:x[0] , foundword))
+        outputwords(foundword, (20,280), 10, 1, BLUE)
         screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE),
                     (20,220))
         quitcheck()
