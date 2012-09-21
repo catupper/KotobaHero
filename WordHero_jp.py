@@ -15,7 +15,7 @@ LEAST_LEN = 3
 BOARD_SIZE = 550
 LEAST_BONUS = 2
 LONGEST_LEN = 6
-PLAY_TIME = 10
+PLAY_TIME = 100
 SCORE_TIME = 20
 WHITE = (255, 255, 255)
 GREEN = (200, 100, 10)
@@ -219,12 +219,15 @@ def play(board, countdown):
                 if square[x].mode == 1:
                     if p == 1:
                         square[x].mode = 102
+                        square[x].limit = get_time() + 0.4
                         square[x].used += 1
                         nowpoint += square[x].point
                     elif p == 3:
                         square[x].mode = 104
+                        square[x].limit = get_time() + 0.4
                     else:
                         square[x].mode = 103
+                        square[x].limit = get_time() + 0.4
             nowword = []
             checking = False
         
@@ -322,6 +325,7 @@ class swit(pygame.sprite.Sprite):
         self.used = 0
 	self.char = charo[characters.index(char)]
         self.color = (0, 0, 0)
+        self.limit = 0
         self.norm = pygame.transform.scale(
                       pygame.image.load("images/%s.png"%self.char),
                       (size - 4,size - 4))
@@ -351,7 +355,8 @@ class swit(pygame.sprite.Sprite):
         if(self.mode % 5 == 3): self.image = self.red       #wrong
         if(self.mode % 5 == 4): self.image = self.yellow    #wrong
 
-        if(self.mode > 1): self.mode = max(self.mode-5, 0)
+        if(self.mode > 1 and self.limit < get_time()):
+                self.mode = 0
 
         self.image.blit(
             numfont[self.size(2)].render(str(self.point), False, WHITE),
