@@ -311,7 +311,7 @@ def score(board, nowlist, points, countdown, foundword):
             square[x].update()
             square[x].draw(screen)
         outputwords(nowlist[selected], (240,100), 10, 2, YAMABUKI, used = map(lambda x:x[0] , foundword))
-        outputwords(foundword, (20,280), 10, 1, BLUE)
+        outputwords(foundword, (20,280), 10, 1, SKY_BLUE)
         screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE),
                     (20,220))
         quitcheck()
