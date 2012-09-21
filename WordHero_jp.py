@@ -14,7 +14,7 @@ HEIGHT = 700
 LEAST_LEN = 3
 BOARD_SIZE = 550
 LEAST_BONUS = 2
-LONGEST_LEN = 5
+LONGEST_LEN = 6
 PLAY_TIME = 100
 SCORE_TIME = 20
 WHITE = (255, 255, 255)
@@ -26,9 +26,9 @@ SKY_BLUE = (100, 100, 255)
 BLACK = (0, 0, 0)
 BACK_GROUND = BLACK
 Dictfile = "dictionary/mydicth"
-romaji = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
+characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
 charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
-point = [rr(1, 9) for x in romaji]
+point = [rr(1, 9) for x in characters]
 
 
 def quitcheck():
@@ -44,8 +44,8 @@ def makedic(filename):
     res = set()
     for x in f:
         x = x.strip()
-        if len(x.decode('euc_jp')) >= LEAST_LEN :
-            res.add(x.decode('euc_jp'))
+        if len(x.decode('utf-8')) >= LEAST_LEN :
+            res.add(x.decode('utf-8'))
     return sorted(list(res))
 
 WORDLIST = makedic(Dictfile)
@@ -91,7 +91,7 @@ def sixteenmap():
 sx=sixteenmap()
 
 def wordpoint(word):
-    return sum(point[romaji.index(x)] for x in word) + (len(word)  ** 5) / 150
+    return sum(point[characters.index(x)] for x in word) + (len(word)  ** 5) / 150
 
 def mkwordlist(board):
     longest = 0
@@ -135,7 +135,7 @@ def mkwordlist(board):
     
 
 def randhi():
-    return romaji[rr(0, len(romaji)-1)]
+    return characters[rr(0, len(characters)-1)]
 
 def putword(board, word):
     screen.blit(sysfont[6].render(ind_word(board, word), False, WHITE)
@@ -191,7 +191,7 @@ def play(board, countdown):
     nowword = []
     foundword = []
     mouse_pressed = False
-    square = [swit(x / 4, x % 4, board[x], point[romaji.index(board[x])]) for x in xrange(16)]
+    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])]) for x in xrange(16)]
     used = [False] * len(WORDLIST)
     checking = False
     finish_time = get_time() + countdown 
@@ -270,10 +270,11 @@ def play(board, countdown):
 
 
 def score(board, nowlist, points, countdown, foundword):
-    square = [swit(x / 4, x % 4, board[x], point[romaji.index(board[x])], 50) for x in xrange(16)]
+    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], 50) for x in xrange(16)]
     finish_time = get_time() + countdown
     selected = 16
     mouse_pressed = False
+    foundword = [x for x in foundword if x[0] != 'Bonus']
     foundword.sort(key = lambda x : wordpoint(x[0]),reverse = True)
     while get_time() < finish_time:
         screen.fill(BACK_GROUND)
@@ -312,23 +313,24 @@ class swit(pygame.sprite.Sprite):
     def __init__ (self,x,y,char,point,size = BOARD_SIZE / 4):
         pygame.sprite.Sprite.__init__(self)
         self.used = 0
-	self.char = charo[romaji.index(char)]
+	self.char = charo[characters.index(char)]
         self.color = (0, 0, 0)
         self.norm = pygame.transform.scale(
-                     pygame.image.load("images/%s.png"%self.char),
-                     (size - 4,size - 4))
+                      pygame.image.load("images/%s.png"%self.char),
+                      (size - 4,size - 4))
         self.blue = pygame.transform.scale(
-                     pygame.image.load("images/%sBlue.png"%self.char),
-                     (size - 4, size - 4))
+                      pygame.image.load("images/%sBlue.png"%self.char),
+                      (size - 4, size - 4))
         self.green = pygame.transform.scale(
                       pygame.image.load("images/%sGreen.png"%self.char),
                       (size - 4, size - 4))
         self.yellow = pygame.transform.scale(
-                       pygame.image.load("images/%sYello.png"%self.char),
-                       (size - 4, size - 4))
+                      pygame.image.load("images/%sYello.png"%self.char),
+                      (size - 4, size - 4))
         self.red = pygame.transform.scale(
-                    pygame.image.load("images/%sRed.png"%self.char),
-                    (size - 4, size - 4))
+                      pygame.image.load("images/%sRed.png"%self.char),
+                      (size - 4, size - 4))
+
         self.rect  = pygame.Rect(x * size + 2, y * size + 2, size, size)
         self.mode  = 0
         self.point = point
