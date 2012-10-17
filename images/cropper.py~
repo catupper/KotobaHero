@@ -1,0 +1,10 @@
+from PIL import Image
+
+filelist = [x + y for x in "akstnhmrgzdbp" for y in "aiueo"] + ["ya", "yu", "yo", "wa", "nn"]
+
+for x in filelist:
+    for t in ["", "Blue", "Green", "Red", "Yello"]:
+        im = Image.open(x + t + '.png')
+        box = (5,5,175,175)
+        im = im.crop(box)
+        im.save(x + t + '.png', 'PNG')
