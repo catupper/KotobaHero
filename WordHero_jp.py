@@ -181,7 +181,7 @@ def outputwords(words, pos, gap, size, color, limit=600, used = None):
             (pos[0], pos[1]+height))
         else:
             if(used != None and words[k][0] in used):
-                colors = SKY_BLUE
+                colors = YAMABUKI
             else:
                 colors = color
             screen.blit(
@@ -206,6 +206,7 @@ def play(board, countdown):
     bonus1 = False
     bonus2 = False
     while get_time() < finish_time:
+        gt = get_time()
         screen.fill(BACK_GROUND)
         clock.tick(60)
         countdown -= 1
@@ -215,19 +216,19 @@ def play(board, countdown):
             p=search(ind_word(board, nowword), used)
             if p == 1:
                 foundword = [["".join(board[x] for x in  nowword)]] + foundword
+                nowpoint += wordpoint("".join(board[x] for x in nowword))
             for x in xrange(16):
                 if square[x].mode == 1:
                     if p == 1:
                         square[x].mode = 102
-                        square[x].limit = get_time() + 0.4
+                        square[x].limit = gt + 0.4
                         square[x].used += 1
-                        nowpoint += square[x].point
                     elif p == 3:
                         square[x].mode = 104
-                        square[x].limit = get_time() + 0.4
+                        square[x].limit = gt + 0.4
                     else:
                         square[x].mode = 103
-                        square[x].limit = get_time() + 0.4
+                        square[x].limit = gt + 0.4
             nowword = []
             checking = False
         
@@ -310,8 +311,8 @@ def score(board, nowlist, points, countdown, foundword):
         for x in xrange(16):
             square[x].update()
             square[x].draw(screen)
-        outputwords(nowlist[selected], (240,100), 10, 2, YAMABUKI, used = map(lambda x:x[0] , foundword))
-        outputwords(foundword, (20,280), 10, 1, SKY_BLUE)
+        outputwords(nowlist[selected], (240,100), 10, 2, SKY_BLUE, used = map(lambda x:x[0] , foundword))
+        outputwords(foundword, (20,280), 10, 1, YAMABUKI)
         screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE),
                     (20,220))
         quitcheck()
