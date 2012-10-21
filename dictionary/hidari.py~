@@ -1,7 +1,0 @@
-k = open('dict', 'r')
-kk = open('newdict', 'w')
-for x in k:
-    kk.write(x.split(',')[0])
-
-k.close()
-kk.close()
