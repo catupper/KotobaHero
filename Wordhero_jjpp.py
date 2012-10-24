@@ -430,7 +430,6 @@ def get_ranking(foundword,point,q):
     
 ##ランキングの表示
 def ranking(rank):
-    color = SKY_BLUE
     finish_time = next_time()
     while get_time() < finish_time:
         screen.fill(BACK_GROUND)
@@ -438,6 +437,7 @@ def ranking(rank):
         height = 0
         k = 0
         while k < len(rank) and 100 + height + 40 < HEIGHT - (HEIGHT - BOARD_SIZE) * 3 / 4:
+            color = SKY_BLUE
             if rank[k][0] == user_name:
                 color = YAMABUKI
             screen.blit(sysfont[1].render(u"%2d位" % (k + 1), False, color), (100, 110+height))
