@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import socket
 import pygame
 import threading
 import Queue
@@ -11,12 +12,13 @@ from random import randint as rr
 
 WIDTH = 800
 HEIGHT = 700
-LEAST_LEN = 3
 BOARD_SIZE = 550
+LEAST_LEN = 3
 LEAST_BONUS = 2
 LONGEST_LEN = 6
 PLAY_TIME = 100
 SCORE_TIME = 20
+TOTAL_TIME = PLAY_TIME + SCORE_TIME
 WHITE = (255, 255, 255)
 GREEN = (200, 100, 10)
 RED = (100, 200, 10)
@@ -28,7 +30,6 @@ BLACK = (0, 0, 0)
 VIOLET = (150, 100, 200)
 LIGHT_BLUE = (150, 255, 255)
 YELLOW = (255, 255, 100)
-
 BACK_GROUND = BLACK
 Dictfile = "dictionary/butadict"
 characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
@@ -52,6 +53,9 @@ HINSICOLOR = {u"名詞,形容動詞語幹":YAMABUKI,
               u"名詞,サ変接続":RED,
               u"動詞,自立":GREEN,
               u"連体詞,*":RED,}
+host = 'localhost'
+port = 11123
+
 
 ##終了条件
 def quitcheck():
@@ -63,13 +67,34 @@ def quitcheck():
 
 ##辞書作成
 def makedic(filename):
+    global WORD__, WORDLIST, WORDLIST_HINSI, WORDLIST_ORIGIN
     f = open(filename, "r")
     res = set()
     for x in f:
         x = x.strip()
         if len(x.decode('utf-8').split(',')[0]) >= LEAST_LEN :
             res.add(x.decode('utf-8'))
-    return sorted(list(set(res)))
+    WORD__ = sorted(list(set(res)))
+    WORDLIST = map(lambda x:x.split(',')[0], WORD__)
+    WORDLIST_HINSI = {}
+    WORDLIST_ORIGIN = {}
+    for x in WORD__:
+        k = x.split(',',2)
+        WORDLIST_HINSI[k[0]] = k[-1]
+        WORDLIST_ORIGIN[k[0]] = k[1]
+
+##16マスの隣接リスト
+def sixteenmap():
+    res=[[] for x in xrange(16)]
+    for x in xrange(4):
+        for y in xrange(4):
+            for i in xrange(-1, 2):
+                for j in xrange(-1, 2):
+                    if i == j == 0:continue
+                    if 0 <= x+i < 4 and 0 <= y+j < 4:
+                        res[x * 4 + y].append((x + i) * 4 + y + j)
+    return res
+    
 
 
 
@@ -99,129 +124,63 @@ def search(word, wordlist, used = None):
         return 2
     return 0
 
-##16マスの隣接リスト
-def sixteenmap():
-    res=[[] for x in xrange(16)]
-    for x in xrange(4):
-        for y in xrange(4):
-            for i in xrange(-1, 2):
-                for j in xrange(-1, 2):
-                    if i == j == 0:continue
-                    if 0 <= x+i < 4 and 0 <= y+j < 4:
-                        res[x * 4 + y].append((x + i) * 4 + y + j)
-    return res
 
 ##文字列をスコアに変換
 def wordpoint(word):
     return sum(point[characters.index(x)] for x in word) + (len(word)  ** 5) / 150
 
-##ボードに含まれる単語全列挙 [単語,[マスにおける場所の配列]]
-def mkwordlist(board):
-    longest = 0
-    two_used = [0] * 16
-    used = [False] * 16
-    res = []
-    fm = sixteenmap()
-    least = 18
-    def dfs(x, word, index):
-        p = search(word, WORDLIST)
-        ok = 0
-        if p == 0:return ok
-        used[x] = True
-        if p == 1:
-            res.append([word, index])
-            ok += 1
-        for n in fm[x]:
-            if used[n]:continue
-            ok += dfs(n, word + board[n], index + [n])
-        used[x] = False
-        two_used[x] += ok
-        return ok
-    
-    for x in xrange(16):dfs(x, board[x], [x])
-    if len(res) == 0:return res,-1,-1
-    ret = [[x for x in res if y in x[1]]for y in xrange(16)] + [res]
-    for x in res:
-        longest = max(longest, len(x[0]))
-    for x in xrange(17):
-        if(ret[x] == []):continue
-        last = '111'
-        p = 1
-        tmp = []
-        ret[x].sort()
-        for p in range(len(ret[x])):
-            if(ret[x][p][0] == last):continue
-            tmp.append(ret[x][p])
-            last = ret[x][p][0]
-        ret[x] = tmp
-        ret[x].sort(key = lambda n:wordpoint(n[0]),reverse = True)
-    return ret, longest, least
-    
-##ランダムなひらがな
-def randhi():
-    return characters[rr(0, len(characters)-1)]
+
 
 ##なぞってる文字を出力
 def putword(board, word):
     screen.blit(sysfont[6].render(ind_word(board, word), False, WHITE)
-                                  ,((WIDTH - BOARD_SIZE) / 2, HEIGHT - (HEIGHT - BOARD_SIZE) * 5/ 6))
+                                  ,((WIDTH - BOARD_SIZE) * 4 / 5, HEIGHT - (HEIGHT - BOARD_SIZE) * 4/ 5))
 
 
 
 
 ##正解した文字の表示と説明
-def outputfoundword(lastword):
+def outputfoundword(lastword, pos):
+    if(lastword == 'NIL'):return
+    pos *= ((WIDTH - BOARD_SIZE) / 2) / 0.1
+    pos = ((WIDTH - BOARD_SIZE) / 2) - pos
+    pos = min(pos, (WIDTH - BOARD_SIZE) / 2)
     color = HINSICOLOR[WORDLIST_HINSI[lastword]]
-    screen.blit(sysfont[4].render(lastword, False, color)
-                ,((WIDTH - BOARD_SIZE) / 2, HEIGHT - (HEIGHT - BOARD_SIZE) * 5/ 6 + 30))
-    screen.blit(sysfont[3].render(WORDLIST_ORIGIN[lastword], False, color)
-                ,((WIDTH - BOARD_SIZE) / 2, HEIGHT - (HEIGHT - BOARD_SIZE) * 5/ 6 + 80))
+    screen.blit(sysfont[2].render(u"読み:%s" % lastword, False, color)
+                ,((WIDTH - BOARD_SIZE) / 2 - pos, HEIGHT - (HEIGHT - BOARD_SIZE) * 3/ 4 + 80))
+    screen.blit(sysfont[4].render(WORDLIST_ORIGIN[lastword], False, color)
+                ,((WIDTH - BOARD_SIZE) / 2 - pos, HEIGHT - (HEIGHT - BOARD_SIZE) * 3/ 4 + 30))
     screen.blit(sysfont[2].render(WORDLIST_HINSI[lastword], False, color)
-                ,((WIDTH - BOARD_SIZE) / 2, HEIGHT - (HEIGHT - BOARD_SIZE) * 5/ 6 ))
+                ,((WIDTH - BOARD_SIZE) / 2 - pos, HEIGHT - (HEIGHT - BOARD_SIZE) * 3/ 4 ))
     
 
 
-##盤作成　条件付き q はスレッドのきゅー
-def makeboard(q=None):
-    k = 0
-    while True:
-        k += 1
 
-        board=[randhi() for x in xrange(16)]
-        wordlist, longest, least = mkwordlist(board)
-        if any(len(x) < LEAST_BONUS for x in wordlist):continue
-        if longest >= LONGEST_LEN:
-
-            if q != None:
-                q.put([board, wordlist])
-                return
-            else:
-                return board, wordlist
 
 ###盤面上のます目の場所の配列から文字列への変換
 def ind_word(board,indexes):
     return "".join(board[x] for x in indexes)
 
 ###残り時間出力
-def timer(time):
+def timer(time,pos = (WIDTH - 150, 0)):
     time = int( time - get_time() )
     col = (100,100,255)
     if time < 10:
         col = (255,50,50)
-    screen.blit(sysfont[6].render(u"残り%d秒"%time, False, col),
-                (300, 610))    
+    screen.blit(sysfont[2].render(u"残り%d秒"%time, False, col),
+                pos)    
 
 ###現在のスコア出力
 def pointer(points):
     screen.blit(sysfont[2].render(u"%04d点"%points, False, YAMABUKI),
-                (550, 100))
+                (150, 0))
     
     
 ###たてに文字を列挙　ポイントもしてくれる
-def outputwords(words, pos, gap, size, color, limit=600, used = None):
+def outputwords(words, pos, gap, size, color, limit= HEIGHT - (HEIGHT - BOARD_SIZE) * 3 / 4, used = None):
     height = 0
     k = 0
-    while k < len(words) and pos[1] + height < limit:
+    while k < len(words) and pos[1] + height + (size + 1) * 10< limit:
         if words[k][0] == "Bonus":
             screen.blit(
                 sysfont[size].render("%s %dpt" % (words[k][0],words[k][1]),
@@ -230,8 +189,10 @@ def outputwords(words, pos, gap, size, color, limit=600, used = None):
         else:
             if(used != None and words[k][0] in used):
                 colors = YAMABUKI
-            else:
+            elif(used != None):
                 colors = color
+            else:
+                colors =  HINSICOLOR[WORDLIST_HINSI[words[k][0]]]
             screen.blit(
                 sysfont[size].render(
                     "%s %dpt"%(words[k][0], wordpoint(words[k][0])),
@@ -242,6 +203,30 @@ def outputwords(words, pos, gap, size, color, limit=600, used = None):
         height += size * 10 + gap
         k += 1
 
+#開始待ち
+def waitfor(time):
+    gt = get_time()
+    board, lists = 0,0   
+    gotten = False
+    while gt < time:
+        gt = int(gt * 2)%4
+        screen.fill(BACK_GROUND)
+        screen.blit(sysfont[5].render("Pleas wait"+'.'*gt, False, DARK_BLUE),(100,100))
+        timer(time)
+        pygame.display.update()
+        quitcheck()
+        gt = get_time()
+        if not gotten and   gt> time - SCORE_TIME:
+            board, lists = getboard()
+            gotten = True
+    return board, lists
+
+#次のゲームの開始時間
+def next_time():
+    time = get_time()
+    g = int(time / TOTAL_TIME)
+    return (g + 1) * TOTAL_TIME
+
 ###あそび
 def play(board, countdown, wordlist):
     wordlists = sorted([x[0] for x in wordlist])
@@ -249,7 +234,7 @@ def play(board, countdown, wordlist):
     foundword = []
     mouse_pressed = False
     sx=sixteenmap()
-    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], ((WIDTH - BOARD_SIZE) / 2, (HEIGHT - BOARD_SIZE) / 6)) for x in xrange(16)]
+    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], ((WIDTH - BOARD_SIZE) * 4 / 5, (HEIGHT - BOARD_SIZE) / 4)) for x in xrange(16)]
     used = [False] * len(wordlists)
     checking = False
     finish_time = get_time() + countdown 
@@ -262,7 +247,6 @@ def play(board, countdown, wordlist):
         gt = get_time()
         screen.fill(BACK_GROUND)
         clock.tick(60)
-        countdown -= 1
         timer(finish_time)
         mouse_press=pygame.mouse.get_pressed()[0]
         if mouse_pressed == True and mouse_press == False or checking:
@@ -272,12 +256,12 @@ def play(board, countdown, wordlist):
                 nowpoint += wordpoint("".join(board[x] for x in nowword))
                 lastword = ind_word(board, nowword)
 
-                lastlimit = gt + 0.8
+                lastlimit = gt + 0.1
             for x in xrange(16):
                 if square[x].mode == 1:
                     if p == 1:
                         square[x].mode = 102
-                        square[x].limit = gt
+                        square[x].limit = gt + 0.4
                         square[x].used += 1
                     elif p == 3:
                         square[x].mode = 104
@@ -292,8 +276,8 @@ def play(board, countdown, wordlist):
             mouse_pressed = mouse_press
             if mouse_pressed:
                 x, y = pygame.mouse.get_pos()
-                x -= (WIDTH - BOARD_SIZE) / 2
-                y -= (HEIGHT - BOARD_SIZE) / 6
+                x -= (WIDTH - BOARD_SIZE) * 4 / 5
+                y -= (HEIGHT - BOARD_SIZE) / 4
                 xx, yy = x, y
                 x /= Square_size
                 y /= Square_size
@@ -332,18 +316,17 @@ def play(board, countdown, wordlist):
             square[x].draw(screen)
         pointer(nowpoint)
         putword(board, nowword)
-        outputwords(foundword, (550, 150), 10, 2, SKY_BLUE)
-        if lastlimit > gt:
-            outputfoundword(lastword)
+        outputwords(foundword, (0, (HEIGHT - BOARD_SIZE) / 4 + 60), 10, 2, SKY_BLUE)
+        outputfoundword(lastword, lastlimit - gt)
         pygame.display.update()
         quitcheck()
     return nowpoint, foundword
 
 
 ###スコア表示
-def score(board, nowlist, points, countdown, foundword):
+def score(board, nowlist, points, foundword):
     square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (0, 0),50) for x in xrange(16)]
-    finish_time = get_time() + countdown
+    finish_time = next_time()
     selected = 16
     mouse_pressed = False
     foundword = [x for x in foundword if x[0] != 'Bonus']
@@ -352,7 +335,6 @@ def score(board, nowlist, points, countdown, foundword):
         gt = get_time()
         screen.fill(BACK_GROUND)
         clock.tick(60)
-        countdown -= 1
         timer(finish_time)
         mouse_press = pygame.mouse.get_pressed()[0]
         if mouse_pressed and not mouse_press:
@@ -373,8 +355,8 @@ def score(board, nowlist, points, countdown, foundword):
         for x in xrange(16):
             square[x].update(gt)
             square[x].draw(screen)
-        outputwords(nowlist[selected], (240,100), 10, 2, SKY_BLUE, used = map(lambda x:x[0] , foundword))
-        outputwords(foundword, (20,280), 10, 1, YAMABUKI)
+        outputwords(nowlist[selected], (240,100), 10, 2, SKY_BLUE, used = map(lambda x:x[0] , foundword), limit = BOARD_SIZE * 6 / 5 )
+        outputwords(foundword, (20,280), 10, 1, YAMABUKI, limit = BOARD_SIZE * 6/ 5)
         screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE),
                     (20,220))
         quitcheck()
@@ -434,26 +416,34 @@ class swit(pygame.sprite.Sprite):
                                (self.size(130), self.size(140)),
                                self.size(4))
 
-
-
     def draw(self, screen):
         screen.blit(self.image, self.rect)
-         
 
+
+def getboard(q=None):
+    clientsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while True:
+        try:
+            clientsock.connect((host,port))
+            break
+        except:
+            pass
+    comand = 'getboard'
+    clientsock.sendall(comand)
+    recm = clientsock.recv(1<<17)
+    clientsock.close()
+    rcvmsg = recm.strip()
+    board,wordlist = rcvmsg.split('|')
+    if q == None:
+        return eval(board), eval(wordlist)
+    else:
+        q.puts([eval(board), eval(wordlist)])
 
 
 
 def main():
-    global screen,sysfont,numfont,Square_size,clock,WORDLIST,WORDLIST_HINSI,WORDLIST_ORIGIN
-    WORD__ = makedic(Dictfile)
-    WORDLIST = map(lambda x:x.split(',')[0], WORD__)
-    WORDLIST_HINSI = {}
-    WORDLIST_ORIGIN = {}
-    for x in WORD__:
-        k = x.split(',',2)
-        WORDLIST_HINSI[k[0]] = k[-1]
-        WORDLIST_ORIGIN[k[0]] = k[1]
-    
+    global screen,sysfont,numfont,Square_size,clock
+    makedic(Dictfile)
     pygame.init()
     screen = pygame.display.set_mode( (WIDTH, HEIGHT) )
     pygame.display.set_caption("Kotoba Hero")
@@ -461,15 +451,13 @@ def main():
     numfont = [ pygame.font.Font("font/ipag.ttf", x ) for x in xrange(10, 200, 10)]
     clock = pygame.time.Clock()
     Square_size = BOARD_SIZE / 4
-    board, lists = makeboard()
-    q = Queue.Queue()
+    board, lists = waitfor(next_time())
+    print board
     while True:
-        p = threading.Thread(target=makeboard, args=(q,))
-        p.start()
         playpoint, foundword = play(board, PLAY_TIME, lists[16])
-        score(board, lists, playpoint, SCORE_TIME, foundword)
-        p.join(5)
-        board, lists = q.get()
+        score(board, lists, playpoint, foundword)
+        board, lists = getboard()
+
 
 
 

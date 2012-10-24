@@ -11,12 +11,13 @@ from random import randint as rr
 
 WIDTH = 800
 HEIGHT = 700
-LEAST_LEN = 3
 BOARD_SIZE = 550
+LEAST_LEN = 3
 LEAST_BONUS = 2
 LONGEST_LEN = 6
-PLAY_TIME = 100
+PLAY_TIME = 1
 SCORE_TIME = 20
+TOTAL_TIME = PLAY_TIME + SCORE_TIME
 WHITE = (255, 255, 255)
 GREEN = (200, 100, 10)
 RED = (100, 200, 10)
@@ -29,7 +30,6 @@ VIOLET = (150, 100, 200)
 LIGHT_BLUE = (150, 255, 255)
 YELLOW = (255, 255, 100)
 BACK_GROUND = BLACK
-QUITFLAG = False
 Dictfile = "dictionary/butadict"
 characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
 charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
@@ -57,21 +57,28 @@ HINSICOLOR = {u"名詞,形容動詞語幹":YAMABUKI,
 def quitcheck():
     for event in pygame.event.get():
         if event.type == QUIT:
-            QUITFLAG = True
             exit()
         if event.type == KEYDOWN and event.key  == K_ESCAPE:
-            QUITFLAG = True
             exit()
 
 ##辞書作成
 def makedic(filename):
+    global WORD__, WORDLIST, WORDLIST_HINSI, WORDLIST_ORIGIN
     f = open(filename, "r")
     res = set()
     for x in f:
         x = x.strip()
         if len(x.decode('utf-8').split(',')[0]) >= LEAST_LEN :
             res.add(x.decode('utf-8'))
-    return sorted(list(set(res)))
+    WORD__ = sorted(list(set(res)))
+    WORDLIST = map(lambda x:x.split(',')[0], WORD__)
+    WORDLIST_HINSI = {}
+    WORDLIST_ORIGIN = {}
+    for x in WORD__:
+        k = x.split(',',2)
+        WORDLIST_HINSI[k[0]] = k[-1]
+        WORDLIST_ORIGIN[k[0]] = k[1]
+    
 
 
 
@@ -158,6 +165,7 @@ def mkwordlist(board):
         ret[x] = tmp
         ret[x].sort(key = lambda n:wordpoint(n[0]),reverse = True)
     return ret, longest, least
+
     
 ##ランダムなひらがな
 def randhi():
@@ -189,12 +197,7 @@ def outputfoundword(lastword, pos):
 
 ##盤作成　条件付き q はスレッドのきゅー
 def makeboard(q=None):
-    k = 0
     while True:
-        if(QUITFLAG):
-            return 
-        k += 1
-
         board=[randhi() for x in xrange(16)]
         wordlist, longest, least = mkwordlist(board)
         if any(len(x) < LEAST_BONUS for x in wordlist):continue
@@ -211,13 +214,13 @@ def ind_word(board,indexes):
     return "".join(board[x] for x in indexes)
 
 ###残り時間出力
-def timer(time):
+def timer(time,pos = (WIDTH - 150, 0)):
     time = int( time - get_time() )
     col = (100,100,255)
     if time < 10:
         col = (255,50,50)
     screen.blit(sysfont[2].render(u"残り%d秒"%time, False, col),
-                (WIDTH - 150, 0))    
+                pos)    
 
 ###現在のスコア出力
 def pointer(points):
@@ -252,6 +255,23 @@ def outputwords(words, pos, gap, size, color, limit= HEIGHT - (HEIGHT - BOARD_SI
         height += size * 10 + gap
         k += 1
 
+#開始待ち
+def waitfor(time):
+    gt = get_time()
+    while gt < time:
+        gt = int(gt * 2)%4
+        screen.fill(BACK_GROUND)
+        screen.blit(sysfont[5].render("Pleas wait"+'.'*gt, False, DARK_BLUE),(100,100))
+        timer(time)
+        pygame.display.update()
+        quitcheck()
+        gt = get_time()
+#次のゲームの開始時間
+def next_time():
+    time = get_time()
+    g = int(time / TOTAL_TIME)
+    return (g + 1) * TOTAL_TIME
+
 ###あそび
 def play(board, countdown, wordlist):
     wordlists = sorted([x[0] for x in wordlist])
@@ -272,7 +292,6 @@ def play(board, countdown, wordlist):
         gt = get_time()
         screen.fill(BACK_GROUND)
         clock.tick(60)
-        countdown -= 1
         timer(finish_time)
         mouse_press=pygame.mouse.get_pressed()[0]
         if mouse_pressed == True and mouse_press == False or checking:
@@ -350,9 +369,9 @@ def play(board, countdown, wordlist):
 
 
 ###スコア表示
-def score(board, nowlist, points, countdown, foundword):
+def score(board, nowlist, points, foundword):
     square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (0, 0),50) for x in xrange(16)]
-    finish_time = get_time() + countdown
+    finish_time = next_time()
     selected = 16
     mouse_pressed = False
     foundword = [x for x in foundword if x[0] != 'Bonus']
@@ -361,7 +380,6 @@ def score(board, nowlist, points, countdown, foundword):
         gt = get_time()
         screen.fill(BACK_GROUND)
         clock.tick(60)
-        countdown -= 1
         timer(finish_time)
         mouse_press = pygame.mouse.get_pressed()[0]
         if mouse_pressed and not mouse_press:
@@ -453,16 +471,8 @@ class swit(pygame.sprite.Sprite):
 
 
 def main():
-    global screen,sysfont,numfont,Square_size,clock,WORDLIST,WORDLIST_HINSI,WORDLIST_ORIGIN
-    WORD__ = makedic(Dictfile)
-    WORDLIST = map(lambda x:x.split(',')[0], WORD__)
-    WORDLIST_HINSI = {}
-    WORDLIST_ORIGIN = {}
-    for x in WORD__:
-        k = x.split(',',2)
-        WORDLIST_HINSI[k[0]] = k[-1]
-        WORDLIST_ORIGIN[k[0]] = k[1]
-    
+    global screen,sysfont,numfont,Square_size,clock
+    makedic(Dictfile)
     pygame.init()
     screen = pygame.display.set_mode( (WIDTH, HEIGHT) )
     pygame.display.set_caption("Kotoba Hero")
@@ -472,11 +482,13 @@ def main():
     Square_size = BOARD_SIZE / 4
     board, lists = makeboard()
     q = Queue.Queue()
+    waitfor(next_time())
     while True:
         p = threading.Thread(target=makeboard, args=(q,))
         p.start()
+        print len(lists[16])
         playpoint, foundword = play(board, PLAY_TIME, lists[16])
-        score(board, lists, playpoint, SCORE_TIME, foundword)
+        score(board, lists, playpoint, foundword)
         p.join(0)
         board, lists = q.get()
 
