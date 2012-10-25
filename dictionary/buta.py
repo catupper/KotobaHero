@@ -3,6 +3,12 @@
 k = open('dict', 'r')
 kk = open('butadicts', 'r')
 kkk = open('newdict', 'w')
+butadb = open('bbdicts','r')
+butachange = {}
+for x in butadb:
+    l,r = x.decode('utf-8').strip().split(',')
+    butachange[l] = r
+
 wordlist = []
 isther = []
 for x in k:
@@ -14,7 +20,10 @@ isther = set(isther)
 for x in kk:
     x = x.strip()
     if x in isther:continue
-    wordlist.append(x+','+x+',名詞,一般')
+    try:
+        wordlist.append(x+','+butachange[x.decode('utf-8')].encode('utf-8')+',名詞,一般')
+    except:
+        pass
 
 wordlist=sorted(list(set(wordlist)))
 last = 'aa'

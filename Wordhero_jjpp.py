@@ -33,10 +33,10 @@ VIOLET = (150, 100, 200)
 LIGHT_BLUE = (150, 255, 255)
 YELLOW = (255, 255, 100)
 BACK_GROUND = BLACK
-Dictfile = "dictionary/butadict"
+Dictfile = "dictionary/newdict"
 characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
 charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
-point = [rr(1, 9) for x in characters]
+point = [3,1,1,5,3,2,2,1,5,2,4,1,4,4,8,3,4,2,6,3,6,8,12,10,6,7,8,7,12,9,5,6,9,7,8,5,9,10,9,9,11,3,11,12,12,7,13,13,10,6,8,10,7,11,10,11,13,11,13,12,5,4,2,8,1]
 HINSICOLOR = {u"名詞,形容動詞語幹":YAMABUKI,
               u"動詞,接尾":VIOLET,
               u"接続詞,*":LIGHT_BLUE,
@@ -53,6 +53,7 @@ HINSICOLOR = {u"名詞,形容動詞語幹":YAMABUKI,
               u"副詞,助詞類接続":BLUE,
               u"副詞,一般":BLUE,
               u"名詞,サ変接続":RED,
+              u"名詞,固有名詞":RED,
               u"動詞,自立":GREEN,
               u"連体詞,*":RED,}
 host = 'localhost'

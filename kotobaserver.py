@@ -17,11 +17,11 @@ PLAY_TIME = 100
 SCORE_TIME = 20
 RANK_TIME = 10
 TOTAL_TIME = PLAY_TIME + SCORE_TIME+RANK_TIME
-Dictfile = "dictionary/butadict"
+Dictfile = "dictionary/newdict"
 characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
 charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
 
-point = [rr(1, 9) for x in characters]
+point = [3,1,1,5,3,2,2,1,5,2,4,1,4,4,8,3,4,2,6,3,6,8,12,10,6,7,8,7,12,9,5,6,9,7,8,5,9,10,9,9,11,3,11,12,12,7,13,13,10,6,8,10,7,11,10,11,13,11,13,12,5,4,2,8,1]
 BOARD_QUEUE = []
 ranksorted = False
 ranking = []
@@ -169,7 +169,7 @@ def recive(ct):
         ranking.append(eval(rcvmsg.split('|')[1]))
     if rcvmsg == 'getranking':
         if not ranksorted:
-            ranking.sort(key = lambda x: x[1])
+            ranking.sort(key = lambda x: x[1],reverse = True)
             ranksorted = True
         return_message = str(ranking)
     if return_message != None:
