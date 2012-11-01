@@ -17,7 +17,7 @@ BOARD_SIZE = 550
 LEAST_LEN = 3
 LEAST_BONUS = 2
 LONGEST_LEN = 6
-PLAY_TIME = 100
+PLAY_TIME = 10
 SCORE_TIME = 20
 RANK_TIME = 10
 TOTAL_TIME = PLAY_TIME + SCORE_TIME + RANK_TIME
@@ -32,7 +32,7 @@ BLACK = (0, 0, 0)
 VIOLET = (150, 100, 200)
 LIGHT_BLUE = (150, 255, 255)
 YELLOW = (255, 255, 100)
-BACK_GROUND = BLACK
+BACK_GROUND = (130, 70, 30)
 Dictfile = "dictionary/newdict"
 characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
 charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
@@ -60,13 +60,20 @@ host = 'localhost'
 port = 11123
 
 ##終了条件
-def quitcheck():
-    for event in pygame.event.get():
+def quitcheck(events = None):
+    if events == None:
+        events = pygame.event.get()
+    for event in events:
         if event.type == QUIT:
             exit()
         if event.type == KEYDOWN and event.key  == K_ESCAPE:
             exit()
 
+#画像をゲット
+def getimages():
+    global foundwordback, under_field
+    foundwordback = pygame.image.load("images/foundwords.png")
+    under_field   = pygame.image.load("images/under_field.png")
 
 def get_name():
     inputs = ""
@@ -88,7 +95,8 @@ def get_name():
         if not pressed[K_BACKSPACE] and now_pressed[K_BACKSPACE]:
             inputs = inputs[:-1]
         if now_pressed[K_RETURN] and inputs != "":
-            break            
+            break      
+        real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))      
         pygame.display.flip()
         quitcheck()
         pressed = now_pressed[:]
@@ -165,7 +173,7 @@ def wordpoint(word):
 ##なぞってる文字を出力
 def putword(board, word):
     screen.blit(sysfont[6].render(ind_word(board, word), False, WHITE)
-                                  ,((WIDTH - BOARD_SIZE) * 4 / 5, HEIGHT - (HEIGHT - BOARD_SIZE) * 4/ 5))
+                                  ,(220, 580))
 
 
 
@@ -173,16 +181,16 @@ def putword(board, word):
 ##正解した文字の表示と説明
 def outputfoundword(lastword, pos):
     if(lastword == 'NIL'):return
-    pos *= ((WIDTH - BOARD_SIZE) / 2) / 0.1
-    pos = ((WIDTH - BOARD_SIZE) / 2) - pos
-    pos = min(pos, (WIDTH - BOARD_SIZE) / 2)
+    pos *= 90 / 0.1
+    pos = 90 - pos
+    pos = min(pos, 90)
     color = HINSICOLOR[WORDLIST_HINSI[lastword]]
     screen.blit(sysfont[2].render(u"読み:%s" % lastword, False, color)
-                ,((WIDTH - BOARD_SIZE) / 2 - pos, HEIGHT - (HEIGHT - BOARD_SIZE) * 3/ 4 + 80))
+                ,(110 - pos, 663))
     screen.blit(sysfont[4].render(WORDLIST_ORIGIN[lastword], False, color)
-                ,((WIDTH - BOARD_SIZE) / 2 - pos, HEIGHT - (HEIGHT - BOARD_SIZE) * 3/ 4 + 30))
+                ,(110 - pos, 613))
     screen.blit(sysfont[2].render(WORDLIST_HINSI[lastword], False, color)
-                ,((WIDTH - BOARD_SIZE) / 2 - pos, HEIGHT - (HEIGHT - BOARD_SIZE) * 3/ 4 ))
+                ,(110 - pos, 583))
     
 
 
@@ -193,7 +201,7 @@ def ind_word(board,indexes):
     return "".join(board[x] for x in indexes)
 
 ###残り時間出力
-def timer(time,pos = (WIDTH - 150, 0)):
+def timer(time,pos = (650, 0)):
     time = int( time - get_time() )
     col = (100,100,255)
     if time < 10:
@@ -208,7 +216,7 @@ def pointer(points):
     
     
 ###たてに文字を列挙　ポイントもしてくれる
-def outputwords(words, pos, gap, size, color, limit= HEIGHT - (HEIGHT - BOARD_SIZE) * 3 / 4, used = None):
+def outputwords(words, pos, gap, size, color, limit= 500, used = None):
     height = 0
     k = 0
     while k < len(words) and pos[1] + height + (size + 1) * 10< limit:
@@ -234,6 +242,43 @@ def outputwords(words, pos, gap, size, color, limit= HEIGHT - (HEIGHT - BOARD_SI
         height += size * 10 + gap
         k += 1
 
+#たてに文字を列挙　スクロール可
+def scrolloutput(words, pos, color, used, scroll, selectedword, keymove):
+    selectedword = min(selectedword, len(words) - 1)
+    selectedword = max(0, selectedword)
+    if keymove:
+        if 35 * selectedword - scroll < 250:
+            scroll = (35 * selectedword -250 + scroll *5) / 6 - 2
+        elif 35 * selectedword - scroll > 250:
+            scroll = (35 * selectedword + scroll*5 - 250) / 6 + 2
+    scroll = max(min(scroll,len(words) * 35 - 615), 0)
+    tmp = pygame.Surface((350, 650), flags=0)
+    tmp.fill(BACK_GROUND)
+    nums = 700 / 35
+    height = -scroll
+    k = 0
+    while height <= 650 and k < len(words):
+        size = 2
+        if(used != None and words[k][0] in used):
+            colors = YAMABUKI
+        elif(used != None and k == selectedword):
+            size = 3
+            colors = GREEN
+        elif(used != None):
+            colors = color
+        else:
+            colors =  HINSICOLOR[WORDLIST_HINSI[words[k][0]]]
+        if k == selectedword + 1:
+            height += 10
+        tmp.blit(
+            sysfont[size].render("%s %dpt" % (words[k][0], wordpoint(words[k][0])),
+                                 False, colors),
+            (pos[0] - 200, pos[1]+height))
+        height += 35
+        k += 1   
+    screen.blit(tmp, pos)
+    return scroll, selectedword
+            
 #開始待ち
 def waitfor(time):
     gt = get_time()
@@ -244,7 +289,8 @@ def waitfor(time):
         screen.fill(BACK_GROUND)
         screen.blit(sysfont[5].render("Pleas wait"+'.'*gt, False, DARK_BLUE),(100,100))
         timer(time)
-        pygame.display.update()
+        real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))
+        pygame.display.flip()
         quitcheck()
         gt = get_time()
         if not gotten and   gt> time - SCORE_TIME:
@@ -265,7 +311,7 @@ def play(board, countdown, wordlist):
     foundword = []
     mouse_pressed = False
     sx=sixteenmap()
-    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], ((WIDTH - BOARD_SIZE) * 4 / 5, (HEIGHT - BOARD_SIZE) / 4)) for x in xrange(16)]
+    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (220, 30)) for x in xrange(16)]
     used = [False] * len(wordlists)
     checking = False
     finish_time = get_time() + countdown 
@@ -307,8 +353,10 @@ def play(board, countdown, wordlist):
             mouse_pressed = mouse_press
             if mouse_pressed:
                 x, y = pygame.mouse.get_pos()
-                x -= (WIDTH - BOARD_SIZE) * 4 / 5
-                y -= (HEIGHT - BOARD_SIZE) / 4
+                x = x * 800 / WIDTH
+                y = y * 700 /HEIGHT
+                x -= 220
+                y -= 30
                 xx, yy = x, y
                 x /= Square_size
                 y /= Square_size
@@ -345,52 +393,91 @@ def play(board, countdown, wordlist):
         for x in xrange(16):
             square[x].update(gt)
             square[x].draw(screen)
+        screen.blit(foundwordback, (0, 30))
+        screen.blit(under_field, (0, 580))
+        outputfoundword(lastword, lastlimit - gt)
         pointer(nowpoint)
         putword(board, nowword)
-        outputwords(foundword, (0, (HEIGHT - BOARD_SIZE) / 4 + 60), 10, 2, SKY_BLUE)
-        outputfoundword(lastword, lastlimit - gt)
-        pygame.display.update()
+        outputwords(foundword, (10, 90), 10, 2, SKY_BLUE)
+        real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))
+        pygame.display.flip()
         quitcheck()
     return nowpoint, foundword
 
 
 ###スコア表示
 def score(board, nowlist, points, foundword):
-    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (0, 0),50) for x in xrange(16)]
+    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (0, 0), 50) for x in xrange(16)]
     finish_time = next_time() - RANK_TIME
     selected = 16
-    mouse_pressed = False
     foundword = [x for x in foundword if x[0] != 'Bonus']
     foundword.sort(key = lambda x : wordpoint(x[0]),reverse = True)
+    scroll = 0
+    down_pressed = False
+    up_pressed = False
+    mouse_pressed = False
+    selectedword = 0
+    keymove = 0
     while get_time() < finish_time:
         gt = get_time()
         screen.fill(BACK_GROUND)
-        clock.tick(60)
         timer(finish_time)
+        events = pygame.event.get()
+        keys = pygame.key.get_pressed()
+        up_press = keys[K_UP]
+        down_press = keys[K_DOWN]
         mouse_press = pygame.mouse.get_pressed()[0]
-        if mouse_pressed and not mouse_press:
+        for event in events:
+            if event.type == MOUSEMOTION:
+                keymove = 0
+            if event.type == MOUSEBUTTONDOWN and event.button == 4:
+                scroll -= 20
+            if event.type == MOUSEBUTTONDOWN and event.button == 5:
+                scroll += 20
+        if up_press and up_pressed and gt - keymove > 0.5:
+            keymove += 0.1
+            selectedword -= 1
+        if down_press and down_pressed and gt - keymove > 0.5:
+            keymove += 0.1
+            selectedword += 1
+        if up_press and not up_pressed:
+            selectedword -= 1
+            keymove = gt
+        if down_press and not down_pressed:
+            selectedword += 1
+            keymove = gt
+        if mouse_press and not mouse_pressed:
             x,y = pygame.mouse.get_pos()       
+            x *= 800 / WIDTH
+            y *= 700 / HEIGHT
             x /= 50
             y /= 50
             if 0 <= x < 4 and 0 <= y < 4:
                 if square[x * 4 + y].mode == -3:
                     selected = 16
                     square[x * 4 + y].mode = 0
+                    scroll = 0
                 else:
                     selected = x * 4 + y
                     square[x * 4 + y].mode = -3
                     for j in xrange(16):
                         if j != x*4+y:
                             square[j].mode = 0
+                    scroll = 0
         mouse_pressed = mouse_press
+        up_pressed = up_press
+        down_pressed = down_press
         for x in xrange(16):
             square[x].update(gt)
             square[x].draw(screen)
-        outputwords(nowlist[selected], (240,100), 10, 2, SKY_BLUE, used = map(lambda x:x[0] , foundword), limit = BOARD_SIZE * 6 / 5 )
-        outputwords(foundword, (20,280), 10, 1, YAMABUKI, limit = BOARD_SIZE * 6/ 5)
+        
+        scroll, selectedword = scrolloutput(nowlist[selected], (250, 25), SKY_BLUE, used = map(lambda x:x[0], foundword), scroll = scroll, selectedword = selectedword, keymove = keymove)
+#        outputwords(nowlist[selected], (240,100), 10, 2, SKY_BLUE, used = map(lambda x:x[0], foundword), limit = 700)
+        outputwords(foundword, (20,280), 10, 1, YAMABUKI, limit = 700)
         screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE),
                     (20,220))
         quitcheck()
+        real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))
         pygame.display.flip()
 
 ###ランキングにデータを投稿してランキングを返してもらう
@@ -437,23 +524,24 @@ def ranking(rank):
         timer(finish_time)
         height = 0
         k = 0
-        while k < len(rank) and 100 + height + 40 < HEIGHT - (HEIGHT - BOARD_SIZE) * 3 / 4:
+        while k < len(rank) and 140 + height  < 800:
             color = SKY_BLUE
             if rank[k][0] == user_name:
                 color = YAMABUKI
             screen.blit(sysfont[1].render(u"%2d位" % (k + 1), False, color), (100, 110+height))
             screen.blit(sysfont[3].render(rank[k][0], False, color),(200, 100 + height))
-            screen.blit(numfont[2].render(str(rank[k][1]),False,color),(450,110+height))
+            screen.blit(numfont[2].render(str(rank[k][1]),False,color),(450,110 + height))
             k += 1
             height += 50
         quitcheck()
+        real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))
         pygame.display.flip()
     
         
 
 ###ボードの各盤のクラス
 class swit(pygame.sprite.Sprite):
-    def __init__ (self,x,y,char,point,(left,top),size = BOARD_SIZE / 4):
+    def __init__ (self,x,y,char,point,(left,top),size = 550 / 4):
         pygame.sprite.Sprite.__init__(self)
         self.used = 0
 	self.char = charo[characters.index(char)]
@@ -529,15 +617,17 @@ def getboard(q=None):
     
 
 def main():
-    global screen,sysfont,numfont,Square_size,clock,user_name
+    global screen,sysfont,numfont,Square_size,clock,user_name,real_screen
+    getimages()
     makedic(Dictfile)
     pygame.init()
-    screen = pygame.display.set_mode( (WIDTH, HEIGHT) )
+    real_screen = pygame.display.set_mode( (WIDTH, HEIGHT) )
+    screen = pygame.Surface((800, 700), flags=0)
     pygame.display.set_caption("Kotoba Hero")
     sysfont =[ pygame.font.Font("font/ume-tgc5.ttf", x) for x in xrange(10, 200, 10)]
     numfont = [ pygame.font.Font("font/ipag.ttf", x ) for x in xrange(10, 200, 10)]
     clock = pygame.time.Clock()
-    Square_size = BOARD_SIZE / 4
+    Square_size = 550 / 4
     user_name = get_name()
     board, lists = waitfor(next_time())
     q = Queue.Queue()
