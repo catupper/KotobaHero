@@ -179,17 +179,26 @@ def recive(ct):
 
 
 ct = change_time()
-calling = False
+calling1 = False
+calling2 = False
 makedic(Dictfile)
-q = Queue.Queue()
+q1 = Queue.Queue()
+q2 = Queue.Queue()
 for _ in xrange(4):
     BOARD_QUEUE.append("|".join(map(str,makeboard())))
 while True: 
-    if not calling and len(BOARD_QUEUE) < 4:
-        p = threading.Thread(target = makeboard, args=(q,))
-        p.start()
-        calling = True
-    if calling and not p.isAlive():
-        BOARD_QUEUE.append("|".join(map(str,q.get())))
-        calling = False
+    p1 = threading.Thread(target = makeboard, args=(q1,))
+    p2 = threading.Thread(target = makeboard, args=(q2,))
+    if not calling1 and len(BOARD_QUEUE) < 4:
+        p1.start()
+        calling1 = True
+    if not calling2 and len(BOARD_QUEUE) < 4:
+        p2.start()
+        calling2 = True
+    if calling1 and not p1.isAlive():
+        BOARD_QUEUE.append("|".join(map(str,q1.get())))
+        calling1 = False
+    if calling2 and not p2.isAlive():
+        BOARD_QUEUE.append("|".join(map(str,q2.get())))
+        calling2 = False
     ct = recive(ct)

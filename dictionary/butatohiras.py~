@@ -1,0 +1,17 @@
+# coding: utf-8
+a = open('budb13av','r')
+b = open('kotoba','w')
+for x in a:
+    try:
+        k = x.decode('shift-jis').strip()
+        r,l = k.split(u'　',1)
+        l = l.split('}')[-1].strip()
+        print r
+        b.write((r+u'　'+l+u'\n').encode('utf-8'))
+    except:
+        pass
+a.close()
+b.close()
+
+    
+    

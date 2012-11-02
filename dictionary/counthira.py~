@@ -1,0 +1,15 @@
+# coding : utf-8
+characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
+
+nums = {}
+for x in characters:
+    nums[x] = 0
+
+k = open('newdict','r')
+
+for x in k:
+    for z in x.decode('utf-8'):
+        if z in nums:
+            nums[z] += 1
+
+print nums

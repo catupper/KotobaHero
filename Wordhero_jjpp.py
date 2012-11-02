@@ -5,6 +5,7 @@ import socket
 import pygame
 import threading
 import Queue
+
 from time import time as get_time
 from time import sleep
 from pygame.locals import *
@@ -22,8 +23,8 @@ SCORE_TIME = 20
 RANK_TIME = 10
 TOTAL_TIME = PLAY_TIME + SCORE_TIME + RANK_TIME
 WHITE = (255, 255, 255)
-GREEN = (200, 100, 10)
-RED = (100, 200, 10)
+RED = (200, 100, 10)
+GREEN = (100, 200, 10)
 YAMABUKI = (200, 200, 100)
 DARK_BLUE = (200, 200, 255)
 SKY_BLUE = (100, 100, 255)
@@ -37,25 +38,25 @@ Dictfile = "dictionary/newdict"
 characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
 charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
 point = [3,1,1,5,3,2,2,1,5,2,4,1,4,4,8,3,4,2,6,3,6,8,12,10,6,7,8,7,12,9,5,6,9,7,8,5,9,10,9,9,11,3,11,12,12,7,13,13,10,6,8,10,7,11,10,11,13,11,13,12,5,4,2,8,1]
-HINSICOLOR = {u"名詞,形容動詞語幹":YAMABUKI,
-              u"動詞,接尾":VIOLET,
-              u"接続詞,*":LIGHT_BLUE,
-              u"形容詞,自立":YELLOW,
-              u"名詞,一般":RED,
-              u"名詞,接尾":LIGHT_BLUE,
-              u"記号,一般":YELLOW,
-              u"動詞,非自立":GREEN,
-              u"名詞,副詞可能":LIGHT_BLUE,
-              u"記号,アルファベット":YELLOW,
-              u"形容詞,非自立":YELLOW,
-              u"形容詞,接尾":YELLOW,
-              u"名詞,ナイ形容詞語幹":RED,
-              u"副詞,助詞類接続":BLUE,
-              u"副詞,一般":BLUE,
-              u"名詞,サ変接続":RED,
-              u"名詞,固有名詞":RED,
-              u"動詞,自立":GREEN,
-              u"連体詞,*":RED,}
+HINSICOLOR = {u"形容動詞語幹":YAMABUKI,
+              u"接尾動詞":VIOLET,
+              u"接続詞":LIGHT_BLUE,
+              u"自立形容詞":YELLOW,
+              u"一般名詞":GREEN,
+              u"接尾名詞":LIGHT_BLUE,
+              u"一般記号":YELLOW,
+              u"非自立動詞":GREEN,
+              u"副詞可能名詞":LIGHT_BLUE,
+              u"アルファベット":YELLOW,
+              u"非自立形容詞":YELLOW,
+              u"接尾形容詞":YELLOW,
+              u"ナイ形容詞語幹":RED,
+              u"助詞類接続副詞":BLUE,
+              u"一般副詞":BLUE,
+              u"サ変接続名詞":RED,
+              u"固有名詞":RED,
+              u"自立動詞":GREEN,
+              u"連体詞":RED,}
 host = 'localhost'
 port = 11123
 
@@ -71,10 +72,15 @@ def quitcheck(events = None):
 
 #画像をゲット
 def getimages():
-    global foundwordback, under_field
+    global foundwordback, under_field, allwordsback, wordinfoback, gameinfoback, myinfoback
     foundwordback = pygame.image.load("images/foundwords.png")
     under_field   = pygame.image.load("images/under_field.png")
+    allwordsback  = pygame.image.load("images/foundwordback.png")
+    wordinfoback  = pygame.image.load("images/wordinformation.png")
+    gameinfoback  = pygame.image.load("images/gameinfo.png")
+    myinfoback    = pygame.image.load("images/myinfo.png")
 
+##名前をゲット
 def get_name():
     inputs = ""
     keys = ['K_a','K_b','K_c','K_d','K_e','K_f','K_g','K_h','K_i','K_j','K_k','K_l','K_m','K_n','K_o','K_p','K_q','K_r','K_s','K_t','K_u','K_v','K_w','K_x','K_y','K_z','K_0','K_1','K_2','K_3','K_4','K_5','K_6','K_7','K_8','K_9']
@@ -118,7 +124,7 @@ def makedic(filename):
     WORDLIST_HINSI = {}
     WORDLIST_ORIGIN = {}
     for x in WORD__:
-        k = x.split(',',2)
+        k = x.split(',')
         WORDLIST_HINSI[k[0]] = k[-1]
         WORDLIST_ORIGIN[k[0]] = k[1]
 
@@ -166,6 +172,7 @@ def search(word, wordlist, used = None):
 
 ##文字列をスコアに変換
 def wordpoint(word):
+    if word == u'None':return 0
     return sum(point[characters.index(x)] for x in word) + (len(word)  ** 5) / 150
 
 
@@ -248,46 +255,212 @@ def scrolloutput(words, pos, color, used, scroll, selectedword, keymove):
     selectedword = max(0, selectedword)
     if keymove:
         if 35 * selectedword - scroll < 250:
-            scroll = (35 * selectedword -250 + scroll *5) / 6 - 2
-        elif 35 * selectedword - scroll > 250:
-            scroll = (35 * selectedword + scroll*5 - 250) / 6 + 2
-    scroll = max(min(scroll,len(words) * 35 - 615), 0)
-    tmp = pygame.Surface((350, 650), flags=0)
-    tmp.fill(BACK_GROUND)
+            scroll = (35 * selectedword -250 + scroll * 2 ) / 3 - 2
+        elif 35 * selectedword - scroll > 253:
+            scroll = (35 * selectedword + scroll * 2 - 253) / 3 + 2
+    scroll = max(min(scroll,len(words) * 35 - 585), 0)
+    tmp = pygame.Surface((350, 640), flags=0)
+    tmp.set_colorkey((0,0,0))
     nums = 700 / 35
     height = -scroll
     k = 0
     while height <= 650 and k < len(words):
         size = 2
+        nopoint = False
+        if used != None and k == selectedword:
+            size = 3
+            nopoint = True
         if(used != None and words[k][0] in used):
             colors = YAMABUKI
         elif(used != None and k == selectedword):
-            size = 3
             colors = GREEN
         elif(used != None):
             colors = color
         else:
             colors =  HINSICOLOR[WORDLIST_HINSI[words[k][0]]]
+        while 10 * (size + 1) * len(words[k][0]) > 250:size -= 1
         if k == selectedword + 1:
             height += 10
-        tmp.blit(
-            sysfont[size].render("%s %dpt" % (words[k][0], wordpoint(words[k][0])),
-                                 False, colors),
-            (pos[0] - 200, pos[1]+height))
+        if not nopoint:
+            tmp.blit(
+                sysfont[size].render("%s %dpt" % (words[k][0], wordpoint(words[k][0])),
+                                     False, colors),
+                (pos[0] - 242, pos[1]+height))
+        else:
+            tmp.blit(
+                sysfont[size].render("%s" % words[k][0],
+                                     False, colors),
+                (pos[0] - 242, pos[1]+height))
+                
         height += 35
         k += 1   
     screen.blit(tmp, pos)
     return scroll, selectedword
-            
+
+
+#たてに文字を列挙　スクロール可 ランキング用
+def scrolloutputrank(rank, pos, scroll):
+    res = -1
+    scroll = max(min(scroll,len(rank) * 35 - 585), 0)
+    tmp = pygame.Surface((350, 640), flags=0)
+    tmp.set_colorkey((0,0,0))
+    nums = 700 / 35
+    height = -scroll
+    k = 0
+    while height <= 650 and k < len(rank):
+        size = 2
+        color = SKY_BLUE
+        if rank[k][0] == user_name:
+            color = YAMABUKI
+            res = rank[k]+[k]
+        while 10 * (size + 1) * len(rank[k][0]) > 250:size -= 1
+        tmp.blit(
+            sysfont[size].render(u"%d位" % (k + 1),
+            False, color),
+            (pos[0] - 242, pos[1]+height))                
+        tmp.blit(
+            sysfont[size].render(rank[k][0],
+            False, color),
+            (pos[0] - 182, pos[1]+height))                
+        tmp.blit(
+            sysfont[size].render(u"%2dpt" % rank[k][1],
+            False, color),
+            (pos[0] - 35, pos[1]+height))                
+        height += 35
+        k += 1   
+
+    screen.blit(tmp, pos)
+    return scroll, res
+
+#単語の説明
+def outputdictionary(word):
+    word = word[0]
+    tmp = pygame.Surface((280, 300), flags=0)
+    tmp.set_colorkey((0,0,0))
+    color = HINSICOLOR[WORDLIST_HINSI[word]]
+    tmp.blit(
+        sysfont[2].render(WORDLIST_HINSI[word], False, color),
+        (10, 20))
+    tmp.blit(
+        sysfont[3 if len(word) <= 6 else 2].render(word, False, color),
+        (10, 65))
+    size = 3
+    while len(WORDLIST_ORIGIN[word]) * 10 * (size + 1) > 250: size -= 1
+    tmp.blit(
+        sysfont[size].render(WORDLIST_ORIGIN[word], False, color),
+        (10, 130))
+    tmp.blit(
+        numfont[3].render(u"%dpt"%wordpoint(word), False, color),
+        (10, 180))
+    screen.blit(tmp, (525, 25))
+
+#ゲームの情報出力
+def outputgamestatus(word, total):
+    highest = word[0][0]
+    length = len(word)
+    tmp = pygame.Surface((280, 340), flags=0)
+    tmp.set_colorkey((0,0,0))
+    color = HINSICOLOR[WORDLIST_HINSI[highest]]
+    tmp.blit(
+        sysfont[1].render(u"最高得点の単語", False, WHITE),
+        (10, 25))
+    tmp.blit(
+        sysfont[3 if len(highest) <= 6 else 2].render(highest, False, color),
+        (10, 55))
+    tmp.blit(
+        numfont[3].render(u"%dpt"%wordpoint(highest), False, color),
+        (10, 100))
+    tmp.blit(
+        sysfont[1].render(u"単語数", False, WHITE),
+        (10, 160))
+    tmp.blit(
+        numfont[3].render(u"%d個"% length, False, GREEN),
+        (10, 185))
+    tmp.blit(
+        sysfont[1].render(u"合計点数", False, WHITE),
+        (10, 240))
+    tmp.blit(
+        numfont[3].render(u"%dpt"%total, False, RED),
+        (10, 260))
+    
+    
+    screen.blit(tmp, (525, 330))
+
+
+#自分の情報を出力
+def outputmystatus(myrank, point, length):
+    rank = myrank[3] + 1
+    highest = myrank[2]    
+    if highest == u'None':
+        color = RED
+    else:
+        color = HINSICOLOR[WORDLIST_HINSI[highest]]
+    tmp = pygame.Surface((280, 650), flags=0)
+    tmp.set_colorkey((0,0,0))
+    tmp.blit(
+        sysfont[3].render(u"あなたの成績", False, WHITE),
+        (10, 25))
+    tmp.blit(
+        sysfont[1].render(u"順位", False, WHITE),
+        (10, 85))
+    tmp.blit(
+        sysfont[3].render(u"%d位"% rank, False, YAMABUKI),
+        (10, 115))
+    tmp.blit(
+        numfont[1].render(u"見つけた中の最高得点", False, WHITE),
+        (10, 190))
+    tmp.blit(
+        sysfont[3 if len(highest) <= 6 else 2].render(highest, False, color),
+        (10, 220))
+    tmp.blit(
+        numfont[3].render(u"%dpt"% wordpoint(highest), False, color),
+        (10, 265))
+    tmp.blit(
+        sysfont[1].render(u"見つけた単語数", False, WHITE),
+        (10, 340))
+    tmp.blit(
+        numfont[3].render(u"%d個"% length, False, GREEN),
+        (10, 370))
+    tmp.blit(
+        sysfont[1].render(u"合計得点", False, WHITE),
+        (10, 445))
+    tmp.blit(
+        numfont[3].render(u"%dpt"% point, False, RED),
+        (10, 475))
+    screen.blit(tmp, (525, 25))
+
 #開始待ち
 def waitfor(time):
     gt = get_time()
     board, lists = 0,0   
     gotten = False
+    waitpleas = map(lambda x: [pygame.transform.scale(
+            pygame.image.load("images/%s.png"%x),
+            (100,100)),
+                               pygame.transform.scale(
+                pygame.image.load("images/%sGreen.png"%x),
+            (100,100))]
+                    ,['ti','yo','tu','to','ma','tu','te','ne'])
     while gt < time:
-        gt = int(gt * 2)%4
+        gt = int(gt * 4)%8
         screen.fill(BACK_GROUND)
-        screen.blit(sysfont[5].render("Pleas wait"+'.'*gt, False, DARK_BLUE),(100,100))
+        screen.blit(sysfont[5].render("Please wait"+'.'*(gt%4), False, DARK_BLUE),(140,500))
+
+        wp = range(8)
+        for x in xrange(8):
+            if( gt == x):
+                wp[x] = waitpleas[x][1]
+            else:
+                wp[x] = waitpleas[x][0]
+            
+        screen.blit(wp[0],(100,100))
+        screen.blit(wp[1],(210,100))
+        screen.blit(wp[2],(320,100))
+        screen.blit(wp[3],(430,100))
+        screen.blit(wp[4],(120,210))
+        screen.blit(wp[5],(230,210))
+        screen.blit(wp[6],(340,210))
+        screen.blit(wp[7],(450,210))
         timer(time)
         real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))
         pygame.display.flip()
@@ -412,12 +585,14 @@ def score(board, nowlist, points, foundword):
     selected = 16
     foundword = [x for x in foundword if x[0] != 'Bonus']
     foundword.sort(key = lambda x : wordpoint(x[0]),reverse = True)
+    total = sum(wordpoint(x[0]) for x in nowlist[16])
     scroll = 0
     down_pressed = False
     up_pressed = False
     mouse_pressed = False
     selectedword = 0
     keymove = 0
+    dest = 0
     while get_time() < finish_time:
         gt = get_time()
         screen.fill(BACK_GROUND)
@@ -427,18 +602,25 @@ def score(board, nowlist, points, foundword):
         up_press = keys[K_UP]
         down_press = keys[K_DOWN]
         mouse_press = pygame.mouse.get_pressed()[0]
+        dest = max(min(dest,len(nowlist[selected]) * 35 - 585), 0)
+        if keymove:
+            dest = scroll
         for event in events:
             if event.type == MOUSEMOTION:
                 keymove = 0
             if event.type == MOUSEBUTTONDOWN and event.button == 4:
-                scroll -= 20
+                dest -= 50
             if event.type == MOUSEBUTTONDOWN and event.button == 5:
-                scroll += 20
+                dest += 50
+            if event.type == QUIT:
+                exit()
+            if event.type == KEYDOWN and event.key  == K_ESCAPE:
+                exit()
         if up_press and up_pressed and gt - keymove > 0.5:
-            keymove += 0.1
+            keymove += 0.08
             selectedword -= 1
         if down_press and down_pressed and gt - keymove > 0.5:
-            keymove += 0.1
+            keymove += 0.08
             selectedword += 1
         if up_press and not up_pressed:
             selectedword -= 1
@@ -457,6 +639,7 @@ def score(board, nowlist, points, foundword):
                     selected = 16
                     square[x * 4 + y].mode = 0
                     scroll = 0
+                    dest = 0
                 else:
                     selected = x * 4 + y
                     square[x * 4 + y].mode = -3
@@ -464,19 +647,23 @@ def score(board, nowlist, points, foundword):
                         if j != x*4+y:
                             square[j].mode = 0
                     scroll = 0
+                    dest = 0
+        scroll = (dest  + scroll * 3 ) / 4
         mouse_pressed = mouse_press
         up_pressed = up_press
         down_pressed = down_press
         for x in xrange(16):
             square[x].update(gt)
             square[x].draw(screen)
-        
-        scroll, selectedword = scrolloutput(nowlist[selected], (250, 25), SKY_BLUE, used = map(lambda x:x[0], foundword), scroll = scroll, selectedword = selectedword, keymove = keymove)
-#        outputwords(nowlist[selected], (240,100), 10, 2, SKY_BLUE, used = map(lambda x:x[0], foundword), limit = 700)
+        screen.blit(allwordsback, (230, 30))
+        screen.blit(wordinfoback, (525, 30))
+        screen.blit(gameinfoback, (525, 335))
+        scroll, selectedword = scrolloutput(nowlist[selected], (250, 35), SKY_BLUE, used = map(lambda x:x[0], foundword), scroll = scroll, selectedword = selectedword, keymove = keymove)
+        outputgamestatus(nowlist[16], total)
+        outputdictionary(nowlist[selected][selectedword])
         outputwords(foundword, (20,280), 10, 1, YAMABUKI, limit = 700)
         screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE),
                     (20,220))
-        quitcheck()
         real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))
         pygame.display.flip()
 
@@ -517,25 +704,83 @@ def get_ranking(foundword,point,q):
     q.put(eval(recm))
     
 ##ランキングの表示
-def ranking(rank):
+def ranking(board, nowlist, points, foundword, rank):
+    length = len(foundword)
+    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (0, 0), 50) for x in xrange(16)]
     finish_time = next_time()
+    selected = 16
+    foundword = [x for x in foundword if x[0] != 'Bonus']
+    foundword.sort(key = lambda x : wordpoint(x[0]),reverse = True)
+    total = sum(wordpoint(x[0]) for x in nowlist[16])
+    scroll = 0
+    down_pressed = False
+    up_pressed = False
+    mouse_pressed = False
+    dest = 0
     while get_time() < finish_time:
+        gt = get_time()
         screen.fill(BACK_GROUND)
         timer(finish_time)
-        height = 0
-        k = 0
-        while k < len(rank) and 140 + height  < 800:
-            color = SKY_BLUE
-            if rank[k][0] == user_name:
-                color = YAMABUKI
-            screen.blit(sysfont[1].render(u"%2d位" % (k + 1), False, color), (100, 110+height))
-            screen.blit(sysfont[3].render(rank[k][0], False, color),(200, 100 + height))
-            screen.blit(numfont[2].render(str(rank[k][1]),False,color),(450,110 + height))
-            k += 1
-            height += 50
-        quitcheck()
+        events = pygame.event.get()
+        keys = pygame.key.get_pressed()
+        up_press = keys[K_UP]
+        down_press = keys[K_DOWN]
+        mouse_press = pygame.mouse.get_pressed()[0]
+        for event in events:
+            if event.type == MOUSEMOTION:
+                keymove = 0
+            if event.type == MOUSEBUTTONDOWN and event.button == 4:
+                dest -= 50
+            if event.type == MOUSEBUTTONDOWN and event.button == 5:
+                dest += 50
+            if event.type == QUIT:
+                exit()
+            if event.type == KEYDOWN and event.key  == K_ESCAPE:
+                exit()
+        if up_press:
+            scroll += 20
+            dest = scroll
+        if down_press:
+            scroll -= 20
+            dest = scroll
+        if mouse_press and not mouse_pressed:
+            x,y = pygame.mouse.get_pos()       
+            x *= 800 / WIDTH
+            y *= 700 / HEIGHT
+            x /= 50
+            y /= 50
+            if 0 <= x < 4 and 0 <= y < 4:
+                if square[x * 4 + y].mode == -3:
+                    selected = 16
+                    square[x * 4 + y].mode = 0
+                    scroll = 0
+                    dest = 0
+                else:
+                    selected = x * 4 + y
+                    square[x * 4 + y].mode = -3
+                    for j in xrange(16):
+                        if j != x*4+y:
+                            square[j].mode = 0
+                    scroll = 0
+                    dest = 0
+        scroll = (dest + scroll * 5 ) /6
+        mouse_pressed = mouse_press
+        up_pressed = up_press
+        down_pressed = down_press
+        for x in xrange(16):
+            square[x].update(gt)
+            square[x].draw(screen)
+        screen.blit(allwordsback, (230, 30))
+        screen.blit(myinfoback, (525, 30))
+        scroll, myrank = scrolloutputrank(rank, (245, 35), scroll = scroll)
+        outputmystatus(myrank, points, length)
+        outputwords(foundword, (20,280), 10, 1, YAMABUKI, limit = 700)
+        screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE),
+                    (20,220))
         real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))
         pygame.display.flip()
+
+
     
         
 
@@ -637,7 +882,7 @@ def main():
         p.start()
         score(board, lists, playpoint, foundword)
         rank = q.get()
-        ranking(rank)
+        ranking(board, lists, playpoint, foundword, rank)
         board, lists = getboard()
 
 
