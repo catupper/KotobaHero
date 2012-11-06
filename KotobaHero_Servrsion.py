@@ -110,7 +110,7 @@ def get_name():
             inputs = inputs[:-1]
         if now_pressed[K_RETURN] and inputs != "":
             break      
-        inputs = inputs[:20]
+        inputs = inputs[:15]
         real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))      
         pygame.display.flip()
         quitcheck()
