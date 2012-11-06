@@ -239,7 +239,7 @@ def outputwords(words, pos, gap, size, color, limit= 500, used = None):
     while k < len(words) and pos[1] + height + (size + 1) * 10< limit:
         if words[k][0] == "Bonus":
             screen.blit(
-                sysfont[ss].render("%s %dpt" % (words[k][0],words[k][1]),
+                sysfont[size].render("%s %dpt" % (words[k][0],words[k][1]),
                                      False, (255, 100 + words[k][1], 100)),
             (pos[0], pos[1]+height))
         else:
