@@ -328,7 +328,6 @@ def scrolloutputrank(rank, pos, scroll):
         if rank[k][0] == user_name:
             color = YAMABUKI
             res = rank[k]+[k]
-        while 10 * (size + 1) * len(rank[k][0]) > 250:size -= 1
         tmp.blit(
             sysfont[size].render(u"%d位" % (k + 1),
             False, color),
@@ -923,8 +922,8 @@ def main():
     real_screen = pygame.display.set_mode( (WIDTH, HEIGHT) )
     screen = pygame.Surface((800, 700), flags=0)
     pygame.display.set_caption("Kotoba Hero")
-    sysfont =[ pygame.font.Font("font/ume-tgc5.ttf", x) for x in xrange(10, 200, 10)]
-    numfont = [ pygame.font.Font("font/ipag.ttf", x ) for x in xrange(10, 200, 10)]
+    sysfont =[ pygame.font.Font("font/ume-tgc5.ttf", x) for x in xrange(10, 200, 10)] + [ pygame.font.Font("font/ume-tgc5.ttf", 1)]
+    numfont = [ pygame.font.Font("font/ipag.ttf", x ) for x in xrange(10, 200, 10)] + [ pygame.font.Font("font/ipag.ttf", 1)]
     clock = pygame.time.Clock()
     Square_size = 550 / 4
     user_name = get_name()
