@@ -901,11 +901,9 @@ def gettime_gap(q=None):
     clientsock.close()
     rcvmsg = recm.strip()
     server_time, PLAY_TIME, SCORE_TIME, RANK_TIME = map(eval, rcvmsg.split(','))
-    print server_time, PLAY_TIME, SCORE_TIME, RANK_TIME
     TOTAL_TIME = PLAY_TIME + SCORE_TIME + RANK_TIME
     gap = server_time - time.time()
     if q == None:
-        print gap
         return gap
     else:
         q.puts([gap])
