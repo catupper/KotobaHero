@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/Usre/bin/env python
 # -*- coding: utf-8 -*-
 
 import socket
@@ -298,6 +298,7 @@ def scrolloutput(words, pos, color, used, scroll, selectedword, keymove):
         if k == selectedword + 1:
             height += 10
         if not nopoint:
+            while 10 * (size + 1) * len(words[k][0]) > 200:size -= 1
             tmp.blit(
                 sysfont[size].render("%s %dpt" % (words[k][0], wordpoint(words[k][0])),
                                      False, colors),
@@ -330,18 +331,18 @@ def scrolloutputrank(rank, pos, scroll):
             color = YAMABUKI
             res = rank[k]+[k]
         tmp.blit(
-            sysfont[size].render(u"%d位" % (k + 1),
+            sysfont[2].render(u"%d位" % (k + 1),
             False, color),
             (pos[0] - 242, pos[1]+height))                
         tmp.blit(
-            sysfont[size].render(u"%4dpt" % rank[k][1],
+            sysfont[1].render(u"%4dpt" % (rank[k][1]),
             False, color),
-            (pos[0] - 75, pos[1]+height))                
-        while (size + 1) * 10 * len(rank[k][0]) > 107: size -= 1
+            (pos[0] - 45, pos[1]+height+10))                
+        while (size ) * 10 * len(rank[k][0]) > 214: size -= 1
         tmp.blit(
             sysfont[size].render(rank[k][0],
             False, color),
-            (pos[0] - 182, pos[1]+height))                
+            (pos[0] - 192, pos[1]+height))                
         height += 35
         k += 1   
 
@@ -873,18 +874,20 @@ class swit(pygame.sprite.Sprite):
 
 def getboard(q=None):
     clientsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    comand = 'getboard'
     while True:
         try:
             clientsock.connect((host,port))
+            clientsock.sendall(comand)
+            recm = clientsock.recv(1<<17)
+            clientsock.close()
+            rcvmsg = recm.strip()
+            board,wordlist = rcvmsg.split('|')
             break
         except:
             pass
-    comand = 'getboard'
-    clientsock.sendall(comand)
-    recm = clientsock.recv(1<<17)
-    clientsock.close()
-    rcvmsg = recm.strip()
-    board,wordlist = rcvmsg.split('|')
+
+        
     if q == None:
         return eval(board), eval(wordlist)
     else:
@@ -936,6 +939,7 @@ def main():
         p.start()
         score(board, lists, playpoint, foundword)
         rank = q.get()
+        print rank
         ranking(board, lists, playpoint, foundword, rank)
         board, lists = getboard()
 
