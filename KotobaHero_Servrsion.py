@@ -203,7 +203,7 @@ def outputfoundword(lastword, pos):
     screen.blit(sysfont[2].render(u"読み:%s" % lastword, False, color)
                 ,(110 - pos, 663))
     size = 4
-    while (size + 1) * 10 * len(lastword) > 110:size-=1
+    while (size + 1) * 10 * len(WORDLIST_ORIGIN[lastword]) > 110:size-=1
     screen.blit(sysfont[4].render(WORDLIST_ORIGIN[lastword], False, color)
                 ,(110 - pos, 613))
     screen.blit(sysfont[2].render(WORDLIST_HINSI[lastword], False, color)
