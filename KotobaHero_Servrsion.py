@@ -11,16 +11,17 @@ from time import sleep
 from pygame.locals import *
 from random import randint as rr
 
-
-WIDTH = 400
-HEIGHT = 350
+f = open('config/screensize.txt','r')
+WIDTH = int(f.next())
+HEIGHT = int(f.next())
+f.close()
 BOARD_SIZE = 550
 LEAST_LEN = 3
 LEAST_BONUS = 2
 LONGEST_LEN = 6
-PLAY_TIME = 10
-SCORE_TIME = 20
-RANK_TIME = 10
+PLAY_TIME = 1
+SCORE_TIME = 1
+RANK_TIME = 1
 TOTAL_TIME = PLAY_TIME + SCORE_TIME + RANK_TIME
 WHITE = (255, 255, 255)
 RED = (200, 100, 10)
@@ -72,13 +73,14 @@ def quitcheck(events = None):
 
 #画像をゲット
 def getimages():
-    global foundwordback, under_field, allwordsback, wordinfoback, gameinfoback, myinfoback
+    global foundwordback, under_field, allwordsback, wordinfoback, gameinfoback, myinfoback, playinfoback
     foundwordback = pygame.image.load("images/foundwords.png")
     under_field   = pygame.image.load("images/under_field.png")
     allwordsback  = pygame.image.load("images/foundwordback.png")
     wordinfoback  = pygame.image.load("images/wordinformation.png")
     gameinfoback  = pygame.image.load("images/gameinfo.png")
     myinfoback    = pygame.image.load("images/myinfo.png")
+    playinfoback  = pygame.image.load("images/playwords.png")
 
 ##時間をゲット
 def get_time():
@@ -590,7 +592,7 @@ def play(board, countdown, wordlist):
 
 ###スコア表示
 def score(board, nowlist, points, foundword):
-    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (0, 0), 50) for x in xrange(16)]
+    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (15, 0), 50) for x in xrange(16)]
     finish_time = next_time() - RANK_TIME
     selected = 16
     foundword = [x for x in foundword if x[0] != 'Bonus']
@@ -644,7 +646,8 @@ def score(board, nowlist, points, foundword):
             x *= 800 / WIDTH
             y *= 700 / HEIGHT
             if 220 < x < 530:
-                selectedword = (dest + y - 70) / 35
+                selectedword = (scroll + y - 70) / 35
+            x -= 15
             x /= 50
             y /= 50
             if 0 <= x < 4 and 0 <= y < 4:
@@ -686,12 +689,12 @@ def score(board, nowlist, points, foundword):
         screen.blit(allwordsback, (230, 30))
         screen.blit(wordinfoback, (525, 30))
         screen.blit(gameinfoback, (525, 335))
+        screen.blit(playinfoback, (5, 205))
         scroll, selectedword = scrolloutput(nowlist[selected], (250, 35), SKY_BLUE, used = map(lambda x:x[0], foundword), scroll = scroll, selectedword = selectedword, keymove = keymove)
         outputgamestatus(nowlist[16], total)
         outputdictionary(nowlist[selected][selectedword])
         outputwords(foundword, (20,280), 10, 1, YAMABUKI, limit = 700)
-        screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE),
-                    (20,220))
+        screen.blit(numfont[3].render("%dpt"%points, False, DARK_BLUE),(20,220))
         real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))
         pygame.display.flip()
 
@@ -734,7 +737,7 @@ def get_ranking(foundword,point,q):
 ##ランキングの表示
 def ranking(board, nowlist, points, foundword, rank):
     length = len(foundword)
-    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (0, 0), 50) for x in xrange(16)]
+    square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (15, 0), 50) for x in xrange(16)]
     finish_time = next_time()
     selected = 16
     foundword = [x for x in foundword if x[0] != 'Bonus']
@@ -786,7 +789,7 @@ def ranking(board, nowlist, points, foundword, rank):
         else:
             mouse_pos = 'NIL'
 
-        scroll = (dest + scroll * 5 ) /6
+        scroll = (dest + scroll * 5 ) / 6
         mouse_pressed = mouse_press
         up_pressed = up_press
         down_pressed = down_press
@@ -795,6 +798,7 @@ def ranking(board, nowlist, points, foundword, rank):
             square[x].draw(screen)
         screen.blit(allwordsback, (230, 30))
         screen.blit(myinfoback, (525, 30))
+        screen.blit(playinfoback, (5, 205))
         scroll, myrank = scrolloutputrank(rank, (245, 35), scroll = scroll)
         outputmystatus(myrank, points, length)
         outputwords(foundword, (20,280), 10, 1, YAMABUKI, limit = 700)
@@ -817,20 +821,19 @@ class swit(pygame.sprite.Sprite):
         self.limit = 0
         self.norm = pygame.transform.scale(
                       pygame.image.load("images/%s.png"%self.char),
-                      (size - 4,size - 4))
+                      (size - 1,size - 1))
         self.blue = pygame.transform.scale(
                       pygame.image.load("images/%sBlue.png"%self.char),
-                      (size - 4, size - 4))
+                      (size - 1, size - 1))
         self.green = pygame.transform.scale(
                       pygame.image.load("images/%sGreen.png"%self.char),
-                      (size - 4, size - 4))
+                      (size - 1, size - 1))
         self.yellow = pygame.transform.scale(
                       pygame.image.load("images/%sYello.png"%self.char),
-                      (size - 4, size - 4))
+                      (size - 1, size - 1))
         self.red = pygame.transform.scale(
                       pygame.image.load("images/%sRed.png"%self.char),
-                      (size - 4, size - 4))
-
+                      (size - 1, size - 1))
         self.rect  = pygame.Rect(left + x * size + 2,top + y * size + 2, size, size)
         self.mode  = 0
         self.point = point
@@ -884,6 +887,7 @@ def getboard(q=None):
         q.puts([eval(board), eval(wordlist)])
 
 def gettime_gap(q=None):
+    global PLAY_TIME, SCORE_TIME, RANK_TIME, TOTAL_TIME
     clientsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     while True:
         try:
@@ -896,7 +900,10 @@ def gettime_gap(q=None):
     recm = clientsock.recv(1024)
     clientsock.close()
     rcvmsg = recm.strip()
-    gap = float(rcvmsg) - time.time()
+    server_time, PLAY_TIME, SCORE_TIME, RANK_TIME = map(eval, rcvmsg.split(','))
+    print server_time, PLAY_TIME, SCORE_TIME, RANK_TIME
+    TOTAL_TIME = PLAY_TIME + SCORE_TIME + RANK_TIME
+    gap = server_time - time.time()
     if q == None:
         print gap
         return gap

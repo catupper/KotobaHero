@@ -164,7 +164,7 @@ def recive(ct):
         ranksorted = False
     return_message=None
     if rcvmsg == 'gettime':
-        return_message = str(get_time())
+        return_message = ",".join(map(str,[get_time(), PLAY_TIME, SCORE_TIME, RANK_TIME]))
     if rcvmsg == 'getboard':
         return_message = BOARD_QUEUE[0]
     if rcvmsg.split('|')[0] == 'sendscore':
