@@ -335,9 +335,9 @@ def scrolloutputrank(rank, pos, scroll):
             False, color),
             (pos[0] - 182, pos[1]+height))                
         tmp.blit(
-            sysfont[size].render(u"%2dpt" % rank[k][1],
+            sysfont[size].render(u"%4dpt" % rank[k][1],
             False, color),
-            (pos[0] - 35, pos[1]+height))                
+            (pos[0] - 75, pos[1]+height))                
         height += 35
         k += 1   
 
