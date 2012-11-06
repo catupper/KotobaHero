@@ -187,6 +187,9 @@ def wordpoint(word):
 
 ##なぞってる文字を出力
 def putword(board, word):
+    tmp = ind_word(board, word)
+    size = 6
+    while len(tmp) * (size + 1) * 10 > 480:size -= 1
     screen.blit(sysfont[6].render(ind_word(board, word), False, WHITE)
                                   ,(220, 580))
 
@@ -331,13 +334,14 @@ def scrolloutputrank(rank, pos, scroll):
             False, color),
             (pos[0] - 242, pos[1]+height))                
         tmp.blit(
-            sysfont[size].render(rank[k][0],
-            False, color),
-            (pos[0] - 182, pos[1]+height))                
-        tmp.blit(
             sysfont[size].render(u"%4dpt" % rank[k][1],
             False, color),
             (pos[0] - 75, pos[1]+height))                
+        while (size + 1) * 10 * len(rank[k][0]) > 107: size -= 1
+        tmp.blit(
+            sysfont[size].render(rank[k][0],
+            False, color),
+            (pos[0] - 182, pos[1]+height))                
         height += 35
         k += 1   
 
