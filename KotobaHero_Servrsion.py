@@ -6,7 +6,7 @@ import pygame
 import threading
 import Queue
 
-from time import time as get_time
+import time
 from time import sleep
 from pygame.locals import *
 from random import randint as rr
@@ -79,6 +79,12 @@ def getimages():
     wordinfoback  = pygame.image.load("images/wordinformation.png")
     gameinfoback  = pygame.image.load("images/gameinfo.png")
     myinfoback    = pygame.image.load("images/myinfo.png")
+
+##時間をゲット
+def get_time():
+    global TIME_GAP
+    return time.time() + TIME_GAP
+
 
 ##名前をゲット
 def get_name():
@@ -194,6 +200,8 @@ def outputfoundword(lastword, pos):
     color = HINSICOLOR[WORDLIST_HINSI[lastword]]
     screen.blit(sysfont[2].render(u"読み:%s" % lastword, False, color)
                 ,(110 - pos, 663))
+    size = 4
+    while (size + 1) * 10 * len(lastword) > 110:size-=1
     screen.blit(sysfont[4].render(WORDLIST_ORIGIN[lastword], False, color)
                 ,(110 - pos, 613))
     screen.blit(sysfont[2].render(WORDLIST_HINSI[lastword], False, color)
@@ -229,7 +237,7 @@ def outputwords(words, pos, gap, size, color, limit= 500, used = None):
     while k < len(words) and pos[1] + height + (size + 1) * 10< limit:
         if words[k][0] == "Bonus":
             screen.blit(
-                sysfont[size].render("%s %dpt" % (words[k][0],words[k][1]),
+                sysfont[ss].render("%s %dpt" % (words[k][0],words[k][1]),
                                      False, (255, 100 + words[k][1], 100)),
             (pos[0], pos[1]+height))
         else:
@@ -239,6 +247,8 @@ def outputwords(words, pos, gap, size, color, limit= 500, used = None):
                 colors = color
             else:
                 colors =  HINSICOLOR[WORDLIST_HINSI[words[k][0]]]
+            ss = size
+            while (1 + ss) * 10 * len("%s %dpt"%(words[k][0], wordpoint(words[k][0]))) > 110: ss -= 1
             screen.blit(
                 sysfont[size].render(
                     "%s %dpt"%(words[k][0], wordpoint(words[k][0])),
@@ -590,6 +600,7 @@ def score(board, nowlist, points, foundword):
     down_pressed = False
     up_pressed = False
     mouse_pressed = False
+    mouse_pos = 'NIL'
     selectedword = 0
     keymove = 0
     dest = 0
@@ -632,6 +643,8 @@ def score(board, nowlist, points, foundword):
             x,y = pygame.mouse.get_pos()       
             x *= 800 / WIDTH
             y *= 700 / HEIGHT
+            if 220 < x < 530:
+                selectedword = (dest + y - 70) / 35
             x /= 50
             y /= 50
             if 0 <= x < 4 and 0 <= y < 4:
@@ -648,6 +661,21 @@ def score(board, nowlist, points, foundword):
                             square[j].mode = 0
                     scroll = 0
                     dest = 0
+        if mouse_press:
+            x,y = pygame.mouse.get_pos()       
+            x *= 800 / WIDTH
+            y *= 700 / HEIGHT
+            if 220 < x < 530:
+                if mouse_pos == 'NIL':
+                    mouse_pos = dest + y
+                else:
+                    dest = mouse_pos - y
+            else:
+                mouse_pos = 'NIL'
+        else:
+            mouse_pos = 'NIL'
+
+                
         scroll = (dest  + scroll * 3 ) / 4
         mouse_pressed = mouse_press
         up_pressed = up_press
@@ -716,6 +744,7 @@ def ranking(board, nowlist, points, foundword, rank):
     down_pressed = False
     up_pressed = False
     mouse_pressed = False
+    mouse_pos = 'NIL'
     dest = 0
     while get_time() < finish_time:
         gt = get_time()
@@ -743,26 +772,20 @@ def ranking(board, nowlist, points, foundword, rank):
         if down_press:
             scroll -= 20
             dest = scroll
-        if mouse_press and not mouse_pressed:
+        if mouse_press:
             x,y = pygame.mouse.get_pos()       
             x *= 800 / WIDTH
             y *= 700 / HEIGHT
-            x /= 50
-            y /= 50
-            if 0 <= x < 4 and 0 <= y < 4:
-                if square[x * 4 + y].mode == -3:
-                    selected = 16
-                    square[x * 4 + y].mode = 0
-                    scroll = 0
-                    dest = 0
+            if 220 < x < 530:
+                if mouse_pos == 'NIL':
+                    mouse_pos = dest + y
                 else:
-                    selected = x * 4 + y
-                    square[x * 4 + y].mode = -3
-                    for j in xrange(16):
-                        if j != x*4+y:
-                            square[j].mode = 0
-                    scroll = 0
-                    dest = 0
+                    dest = mouse_pos - y
+            else:
+                mouse_pos = 'NIL'
+        else:
+            mouse_pos = 'NIL'
+
         scroll = (dest + scroll * 5 ) /6
         mouse_pressed = mouse_press
         up_pressed = up_press
@@ -859,10 +882,32 @@ def getboard(q=None):
         return eval(board), eval(wordlist)
     else:
         q.puts([eval(board), eval(wordlist)])
-    
+
+def gettime_gap(q=None):
+    clientsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while True:
+        try:
+            clientsock.connect((host,port))
+            break
+        except:
+            pass
+    comand = 'gettime'
+    clientsock.sendall(comand)
+    recm = clientsock.recv(1024)
+    clientsock.close()
+    rcvmsg = recm.strip()
+    gap = float(rcvmsg) - time.time()
+    if q == None:
+        print gap
+        return gap
+    else:
+        q.puts([gap])
+
+
 
 def main():
-    global screen,sysfont,numfont,Square_size,clock,user_name,real_screen
+    global screen,sysfont,numfont,Square_size,clock,user_name,real_screen,TIME_GAP
+    TIME_GAP = gettime_gap()
     getimages()
     makedic(Dictfile)
     pygame.init()

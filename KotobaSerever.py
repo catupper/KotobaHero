@@ -17,7 +17,7 @@ PLAY_TIME = 10
 SCORE_TIME = 20
 RANK_TIME = 10
 TOTAL_TIME = PLAY_TIME + SCORE_TIME+RANK_TIME
-Dictfile = "../dictionary/newdict"
+Dictfile = "dictionary/newdict"
 characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
 charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
 
@@ -163,6 +163,8 @@ def recive(ct):
         ranking = []
         ranksorted = False
     return_message=None
+    if rcvmsg == 'gettime':
+        return_message = str(get_time())
     if rcvmsg == 'getboard':
         return_message = BOARD_QUEUE[0]
     if rcvmsg.split('|')[0] == 'sendscore':
