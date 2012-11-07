@@ -11,7 +11,7 @@ from random import randint as rr
 from random import choice
 import socket
 
-host = 'localhost'
+host = '0.0.0.0'
 port = 11123
 LEAST_LEN = 3
 LEAST_BONUS = 2
@@ -47,8 +47,8 @@ def makedic(filename):
         if LONGEST_LEN + 2 >= len(x.decode('utf-8').split(',')[0]) >= LONGEST_LEN :
             ressix.add(x.decode('utf-8'))
             
-    WORD__ = list(res)
-    SIX_DICTIONARY = list(ressix)
+    WORD__ = sorted(list(res))
+    SIX_DICTIONARY = sorted(list(ressix))
     WORDLIST = map(lambda x:x.split(',')[0], WORD__)
 
 ##16マスの隣接リスト
