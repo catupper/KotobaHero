@@ -95,11 +95,11 @@ def randhi():
 
 ##ボードに含まれる単語全列挙 [単語,[マスにおける場所の配列]]
 def mkwordlist(board):
+    fm = SIXTEENMAP
     longest = 0
     two_used = [0] * 16
     used = [False] * 16
     res = []
-    fm = sixteenmap()
     least = 18
     def dfs(x, word, index):
         p = search(word, WORDLIST)
@@ -137,14 +137,18 @@ def mkwordlist(board):
 
 
 def randomlongest():
-    fm = sixteenmap()
+    fm = SIXTEENMAP
     res = [randhi() for x in xrange(16)]
     it = choice(SIX_DICTIONARY)
     start = rr(0, 15)
     used = [False] * 16
     def dfs(place, word):
-        if(word == '')return True
-        if(used[place]) return True
+        if(word == ''):return True
+        if(used[place]):return False
+        used[place] = True
+        g = res[place]
+        res[place] = word[0]
+        
         
     
     
@@ -198,7 +202,7 @@ def recive(ct):
     clientsock.close()
     return ct
 
-
+SIXTEENMAP = sixteenmap()
 ct = change_time()
 calling1 = False
 calling2 = False
