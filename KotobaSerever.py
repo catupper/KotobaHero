@@ -21,10 +21,10 @@ SCORE_TIME = 20
 RANK_TIME = 10
 TOTAL_TIME = PLAY_TIME + SCORE_TIME+RANK_TIME
 Dictfile =  os.path.dirname(os.path.abspath(__file__)) + "/dictionary/newdict"
-characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
-charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
+characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもらりるれろがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
+charo = [x + y  for x in "akstnhmrgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
 
-point = [3,1,1,5,3,2,2,1,5,2,4,1,4,4,8,3,4,2,6,3,6,8,12,10,6,7,8,7,12,9,5,6,9,7,8,5,9,10,9,9,11,3,11,12,12,7,13,13,10,6,8,10,7,11,10,11,13,11,13,12,5,4,2,8,1]
+point = [3,1,1,5,3,2,2,1,5,2,4,1,4,4,8,3,4,2,6,3,6,8,12,10,6,7,8,7,12,9,5,6,9,7,8,5,5,5,5,5,5,9,10,9,9,11,3,11,12,12,7,13,13,10,6,8,10,7,11,10,11,13,11,13,12,5,4,2,8,1]
 BOARD_QUEUE = []
 ranksorted = False
 ranking = []
@@ -138,8 +138,7 @@ def mkwordlist(board):
 ##
 def randomlongest():
     fm = SIXTEENMAP
-    res = [randhi() for x in xrange(16)]
-    return res
+    res = ["" for x in xrange(16)]
     it = choice(SIX_DICTIONARY)
     start = rr(0, 15)
     used = [False] * 16
@@ -162,9 +161,16 @@ def randomlongest():
 
 ##盤作成　条件付き q はスレッドのきゅー
 def makeboard(q=None):
+    k = 0
     while True:
-        board = randomlongest()
-        board = [randhi() for x in xrange(16)]
+        if(k % 100 == 0):
+            boardb = randomlongest()
+        k += 1
+        board = boardb[::]
+        for x in xrange(16):
+            if board[x] == '':
+                board[x] = randhi()
+        ##board = [randhi() for x in xrange(16)]
         wordlist, longest, least = mkwordlist(board)
         if any(len(x) < LEAST_BONUS for x in wordlist):continue
         if longest >= LONGEST_LEN:

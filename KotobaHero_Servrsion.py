@@ -882,16 +882,17 @@ def getboard(q=None):
             recm = clientsock.recv(1<<17)
             clientsock.close()
             rcvmsg = recm.strip()
-            board,wordlist = rcvmsg.split('|')
+            print rcvmsg
+            board,wordlist = map(eval, rcvmsg.split('|'))
             break
         except:
             pass
-
         
     if q == None:
-        return eval(board), eval(wordlist)
+        return board, wordlist
     else:
-        q.puts([eval(board), eval(wordlist)])
+        q.puts([board, wordlist])
+
 
 def gettime_gap(q=None):
     global PLAY_TIME, SCORE_TIME, RANK_TIME, TOTAL_TIME
