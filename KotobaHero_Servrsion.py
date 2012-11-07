@@ -504,7 +504,7 @@ def play(board, countdown, wordlist):
     square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (220, 30)) for x in xrange(16)]
     used = [False] * len(wordlists)
     checking = False
-    finish_time = get_time() + countdown 
+    finish_time = next_time() - RANK_TIME - SCORE_TIME 
     nowpoint = 0
     bonus1 = False
     bonus2 = False
