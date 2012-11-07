@@ -8,6 +8,7 @@ import Queue
 from time import time as get_time
 from time import sleep
 from random import randint as rr
+from random import choice
 import socket
 
 host = 'localhost'
@@ -28,7 +29,6 @@ BOARD_QUEUE = []
 ranksorted = False
 ranking = []
 
-
 ##文字列をスコアに変換
 def wordpoint(word):
     return sum(point[characters.index(x)] for x in word) + (len(word)  ** 5) / 150
@@ -36,15 +36,19 @@ def wordpoint(word):
 
 ##辞書作成
 def makedic(filename):
-    global WORD__, WORDLIST
+    global WORD__, WORDLIST, SIX_DICTIONARY
     f = open(filename, "r")
     res = set()
+    ressix = set()
     for x in f:
         x = x.strip()
         if len(x.decode('utf-8').split(',')[0]) >= LEAST_LEN :
             res.add(x.decode('utf-8'))
-    res = sorted(list(set(res)))
-    WORD__ = res
+        if LONGEST_LEN + 2 >= len(x.decode('utf-8').split(',')[0]) >= LONGEST_LEN :
+            ressix.add(x.decode('utf-8'))
+            
+    WORD__ = list(res)
+    SIX_DICTIONARY = list(ressix)
     WORDLIST = map(lambda x:x.split(',')[0], WORD__)
 
 ##16マスの隣接リスト
@@ -132,10 +136,23 @@ def mkwordlist(board):
     return ret, longest, least
 
 
+def randomlongest():
+    fm = sixteenmap()
+    res = [randhi() for x in xrange(16)]
+    it = choice(SIX_DICTIONARY)
+    start = rr(0, 15)
+    used = [False] * 16
+    def dfs(place, word):
+        if(word == '')return True
+        if(used[place]) return True
+        
+    
+    
+
 ##盤作成　条件付き q はスレッドのきゅー
 def makeboard(q=None):
     while True:
-        board=[randhi() for x in xrange(16)]
+        board = [randhi() for x in xrange(16)]
         wordlist, longest, least = mkwordlist(board)
         if any(len(x) < LEAST_BONUS for x in wordlist):continue
         if longest >= LONGEST_LEN:
