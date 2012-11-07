@@ -19,7 +19,7 @@ PLAY_TIME = 150
 SCORE_TIME = 20
 RANK_TIME = 10
 TOTAL_TIME = PLAY_TIME + SCORE_TIME+RANK_TIME
-Dictfile = os.path.abspath('') + "/dictionary/newdict"
+Dictfile =  os.path.dirname(os.path.abspath(__file__)) + "/dictionary/newdict"
 characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
 charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
 
