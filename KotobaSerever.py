@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import threading
+import sys
+import os
 import Queue
 from time import time as get_time
 from time import sleep
@@ -17,7 +19,7 @@ PLAY_TIME = 150
 SCORE_TIME = 20
 RANK_TIME = 10
 TOTAL_TIME = PLAY_TIME + SCORE_TIME+RANK_TIME
-Dictfile = "dictionary/newdict"
+Dictfile = os.path.abspath('') + "/dictionary/newdict"
 characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
 charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
 
