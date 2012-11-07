@@ -206,7 +206,10 @@ def recive(ct):
             ranksorted = True
         return_message = str(ranking)
     if return_message != None:
-        clientsock.sendall(return_message)
+	try:
+        	clientsock.sendall(return_message)
+	except:
+		pass
     clientsock.close()
     return ct
 
