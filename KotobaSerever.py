@@ -135,10 +135,11 @@ def mkwordlist(board):
         ret[x].sort(key = lambda n:wordpoint(n[0]),reverse = True)
     return ret, longest, least
 
-
+##
 def randomlongest():
     fm = SIXTEENMAP
     res = [randhi() for x in xrange(16)]
+    return res
     it = choice(SIX_DICTIONARY)
     start = rr(0, 15)
     used = [False] * 16
@@ -148,7 +149,13 @@ def randomlongest():
         used[place] = True
         g = res[place]
         res[place] = word[0]
-        
+        for x in fm[place]:
+            if dfs(x, word[1:]):
+                return True
+        res[place] = g
+        return False
+    dfs(start, it)
+    return res
         
     
     
@@ -156,6 +163,7 @@ def randomlongest():
 ##盤作成　条件付き q はスレッドのきゅー
 def makeboard(q=None):
     while True:
+        board = randomlongest()
         board = [randhi() for x in xrange(16)]
         wordlist, longest, least = mkwordlist(board)
         if any(len(x) < LEAST_BONUS for x in wordlist):continue
@@ -210,6 +218,7 @@ makedic(Dictfile)
 q1 = Queue.Queue()
 q2 = Queue.Queue()
 for _ in xrange(4):
+    print _
     BOARD_QUEUE.append("|".join(map(str,makeboard())))
 while True: 
     p1 = threading.Thread(target = makeboard, args=(q1,))
