@@ -173,7 +173,7 @@ class GameManager(threading.Thread):
 				self.rankSorted = True
 			response = str(self.ranking)
 		elif rcvmsg.split('|')[0] == 'sendscore':
-			ranking.append(eval(rcvmsg.split('|')[1]))
+			self.ranking.append(eval(rcvmsg.split('|')[1]))
 		if response != None:
 			try:
 				clientSock.sendall(response)
