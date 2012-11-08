@@ -323,13 +323,15 @@ def scrolloutputrank(rank, pos, scroll):
     nums = 700 / 35
     height = -scroll
     k = 0
+    for x in xrange(len(rank)):
+        if rank[x]['user_name'] == user_name:
+            res = rank[x]
+            res['rank'] = x
     while height <= 650 and k < len(rank):
         size = 2
         color = SKY_BLUE
-        if rank[k]['user_name'] == user_name:
+        if k == res['rank']:
             color = YAMABUKI
-            res = rank[k]
-            res['rank'] = k
         tmp.blit(
             sysfont[2].render(u"%d位" % (k + 1),
             False, color),
