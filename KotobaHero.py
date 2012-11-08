@@ -1,20 +1,19 @@
-#!/Usre/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import socket
 import pygame
 import threading
 import Queue
+import simplejson
 
 import time
 from time import sleep
 from pygame.locals import *
 from random import randint as rr
 
-f = open('config/screensize.txt','r')
-WIDTH = int(f.next())
-HEIGHT = int(f.next())
-f.close()
+WIDTH = 800
+HEIGHT = 700
 BOARD_SIZE = 550
 LEAST_LEN = 3
 LEAST_BONUS = 2
@@ -79,7 +78,7 @@ def getimages():
     allwordsback  = pygame.image.load("images/foundwordback.png")
     wordinfoback  = pygame.image.load("images/wordinformation.png")
     gameinfoback  = pygame.image.load("images/gameinfo.png")
-    myinfoback    = pygame.image.load("images/myinfo.png")
+    myinfoback    = pygame.image.load("images/playerinfo.png")
     playinfoback  = pygame.image.load("images/playwords.png")
 
 ##時間をゲット
@@ -327,20 +326,21 @@ def scrolloutputrank(rank, pos, scroll):
     while height <= 650 and k < len(rank):
         size = 2
         color = SKY_BLUE
-        if rank[k][0] == user_name:
+        if rank[k]['user_name'] == user_name:
             color = YAMABUKI
-            res = rank[k]+[k]
+            res = rank[k]
+            res['rank'] = k
         tmp.blit(
             sysfont[2].render(u"%d位" % (k + 1),
             False, color),
             (pos[0] - 242, pos[1]+height))                
         tmp.blit(
-            sysfont[1].render(u"%4dpt" % (rank[k][1]),
+            sysfont[1].render(u"%4dpt" % (rank[k]['point']),
             False, color),
             (pos[0] - 45, pos[1]+height+10))                
-        while (size ) * 10 * len(rank[k][0]) > 214: size -= 1
+        while (size ) * 10 * len(rank[k]['user_name']) > 214: size -= 1
         tmp.blit(
-            sysfont[size].render(rank[k][0],
+            sysfont[size].render(rank[k]['user_name'],
             False, color),
             (pos[0] - 192, pos[1]+height))                
         height += 35
@@ -406,8 +406,8 @@ def outputgamestatus(word, total):
 
 #自分の情報を出力
 def outputmystatus(myrank, point, length):
-    rank = myrank[3] + 1
-    highest = myrank[2]    
+    rank = myrank['rank'] + 1
+    highest = myrank['maxword']    
     if highest == u'None':
         color = RED
     else:
@@ -722,7 +722,7 @@ def get_ranking(foundword,point,q):
         except:
             pass
     
-    comand = u'sendscore|%s'%str([user_name,point,maxword])
+    comand = simplejson.dumps({'command': 'sendscore', 'score': {'user_name': user_name, 'point': point, 'maxword': maxword}})
     clientsock.sendall(comand)
     clientsock.close()
     sleep(5)
@@ -733,11 +733,17 @@ def get_ranking(foundword,point,q):
             break
         except:
             pass
-    comand = 'getranking'
+    comand = simplejson.dumps({'command': 'getranking'})
     clientsock.sendall(comand)
-    recm = clientsock.recv(1<<17)
+    recm = ''
+    while True:
+        s = clientsock.recv(1024)
+        if not s:
+            break
+        recm += s
+    rcvmsg = recm.strip()
     clientsock.close()
-    q.put(eval(recm))
+    q.put(simplejson.loads(rcvmsg)['RANKING'])
     
 ##ランキングの表示
 def ranking(board, nowlist, points, foundword, rank):
@@ -874,16 +880,27 @@ class swit(pygame.sprite.Sprite):
 
 def getboard(q=None):
     clientsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    comand = 'getboard'
+    comand = simplejson.dumps({'command': 'getboard'})
     while True:
         try:
             clientsock.connect((host,port))
             clientsock.sendall(comand)
-            recm = clientsock.recv(1<<17)
+            recm = ''
+            while True:
+                s = clientsock.recv(1<<17)
+                if not s:
+                    break
+                recm += s
             clientsock.close()
             rcvmsg = recm.strip()
+<<<<<<< HEAD:KotobaHero_Servrsion.py
             print rcvmsg
             board,wordlist = map(eval, rcvmsg.split('|'))
+=======
+            rcv = simplejson.loads(rcvmsg)
+            board = rcv['BOARD']
+            wordlist = rcv['WORDLIST']
+>>>>>>> f6de1a893029bcbe35de9c2e7f24f412fee70c47:KotobaHero.py
             break
         except:
             pass
@@ -903,12 +920,21 @@ def gettime_gap(q=None):
             break
         except:
             pass
-    comand = 'gettime'
+    comand = simplejson.dumps({'command': 'gettime'})
     clientsock.sendall(comand)
-    recm = clientsock.recv(1024)
+    recm = ''
+    while True:
+        s = clientsock.recv(1024)
+        if not s:
+            break
+        recm += s
     clientsock.close()
     rcvmsg = recm.strip()
-    server_time, PLAY_TIME, SCORE_TIME, RANK_TIME = map(eval, rcvmsg.split(','))
+    rcv = simplejson.loads(rcvmsg)
+    server_time = rcv['TIME']
+    PLAY_TIME = rcv['PLAY_TIME']
+    SCORE_TIME = rcv['SCORE_TIME']
+    RANK_TIME = rcv['RANK_TIME']
     TOTAL_TIME = PLAY_TIME + SCORE_TIME + RANK_TIME
     gap = server_time - time.time()
     if q == None:
@@ -940,7 +966,6 @@ def main():
         p.start()
         score(board, lists, playpoint, foundword)
         rank = q.get()
-        print rank
         ranking(board, lists, playpoint, foundword, rank)
         board, lists = getboard()
 
