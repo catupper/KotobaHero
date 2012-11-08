@@ -1,20 +1,19 @@
-#!/Usre/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import socket
 import pygame
 import threading
 import Queue
+import simplejson
 
 import time
 from time import sleep
 from pygame.locals import *
 from random import randint as rr
 
-f = open('config/screensize.txt','r')
-WIDTH = int(f.next())
-HEIGHT = int(f.next())
-f.close()
+WIDTH = 800
+HEIGHT = 700
 BOARD_SIZE = 550
 LEAST_LEN = 3
 LEAST_BONUS = 2
@@ -58,7 +57,7 @@ HINSICOLOR = {u"形容動詞語幹":YAMABUKI,
               u"固有名詞":RED,
               u"自立動詞":GREEN,
               u"連体詞":RED,}
-host = 'npca.jp'
+host = 'localhost'
 port = 11123
 
 ##終了条件
@@ -742,8 +741,9 @@ def get_ranking(foundword,point,q):
         if not s:
             break
         recm += s
+    rcvmsg = recm.strip()
     clientsock.close()
-    q.put(simplejson.loads()['RANKING'])
+    q.put(simplejson.loads(rcvmsg)['RANKING'])
     
 ##ランキングの表示
 def ranking(board, nowlist, points, foundword, rank):
@@ -880,7 +880,7 @@ class swit(pygame.sprite.Sprite):
 
 def getboard(q=None):
     clientsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    comand = 'getboard'
+    comand = simplejson.dumps({'command': 'getboard'})
     while True:
         try:
             clientsock.connect((host,port))
@@ -888,10 +888,11 @@ def getboard(q=None):
             recm = ''
             while True:
                 s = clientsock.recv(1<<17)
+                if not s:
+                    break
                 recm += s
             clientsock.close()
             rcvmsg = recm.strip()
-            print rcvmsg
             rcv = simplejson.loads(rcvmsg)
             board = rcv['BOARD']
             wordlist = rcv['WORDLIST']
@@ -914,11 +915,13 @@ def gettime_gap(q=None):
             break
         except:
             pass
-    comand = 'gettime'
+    comand = simplejson.dumps({'command': 'gettime'})
     clientsock.sendall(comand)
     recm = ''
     while True:
         s = clientsock.recv(1024)
+        if not s:
+            break
         recm += s
     clientsock.close()
     rcvmsg = recm.strip()
@@ -958,7 +961,6 @@ def main():
         p.start()
         score(board, lists, playpoint, foundword)
         rank = q.get()
-        print rank
         ranking(board, lists, playpoint, foundword, rank)
         board, lists = getboard()
 
