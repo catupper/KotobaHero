@@ -57,7 +57,7 @@ HINSICOLOR = {u"形容動詞語幹":YAMABUKI,
               u"固有名詞":RED,
               u"自立動詞":GREEN,
               u"連体詞":RED,}
-host = 'localhost'
+host = 'npca.jp'
 port = 11123
 
 ##終了条件
