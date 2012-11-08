@@ -132,7 +132,7 @@ class BoardGenerator(threading.Thread):
 				continue
 			if min([len(word) for word in wordlist]) < LEAST_BONUS:
 				continue
-			self.queue.append(str(board) + '|' + str(wordlist))
+			self.queue.append({'BOARD': board, 'WORDLIST': wordlist})
 
 class GameManager(threading.Thread):
 	def __init__(self, queue):
@@ -154,7 +154,13 @@ class GameManager(threading.Thread):
 		return (turn + 1) * total - SCORE_TIME - RANK_TIME - 5
 
 	def recieve(self, clientSock):
-		rcvmsg = clientSock.recv(4096)
+        rcvmsg = ''
+        while True:
+		    s = clientSock.recv(1024)
+            if not s:
+                break
+            rcvmsg += s
+        command = simplejson.loads(rcvmsg)
 
 		if time.time() > self.nextTurn:
 			self.queue.pop(0)
@@ -163,17 +169,17 @@ class GameManager(threading.Thread):
 			self.nextTurn = self.getNextTurn()
 
 		response = None
-		if rcvmsg == 'gettime':
+		if command.command == 'gettime':
 			response = simplejson.dumps({'TIME': time.time(), 'PLAY_TIME': PLAY_TIME, 'SCORE_TIME': SCORE_TIME, 'RANK_TIME': RANK_TIME})
-		elif rcvmsg == 'getboard':
-			response = self.queue[0]
-		elif rcvmsg == 'getranking':
+		elif command.command == 'getboard':
+			response = simplejson.dumps(self.queue[0])
+		elif command.command == 'getranking':
 			if not self.rankSorted:
-				self.ranking.sort(key = lambda x: x[1], reverse = True)
+				self.ranking.sort(key = lambda x: x['point'], reverse = True)
 				self.rankSorted = True
-			response = str(self.ranking)
-		elif rcvmsg.split('|')[0] == 'sendscore':
-			self.ranking.append(eval(rcvmsg.split('|')[1]))
+			response = simplejson.dumps({'RANKING': self.ranking)}
+		elif command.command == 'sendscore':
+            self.ranking.append(command.score)
 		if response != None:
 			try:
 				clientSock.sendall(response)
