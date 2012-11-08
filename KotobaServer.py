@@ -164,7 +164,7 @@ class GameManager(threading.Thread):
 
 		response = None
 		if rcvmsg == 'gettime':
-			response = '%f,%d,%d,%d' % (time.time(), PLAY_TIME, SCORE_TIME, RANK_TIME)
+			response = simplejson.dumps({'TIME': time.time(), 'PLAY_TIME': PLAY_TIME, 'SCORE_TIME': SCORE_TIME, 'RANK_TIME': RANK_TIME})
 		elif rcvmsg == 'getboard':
 			response = self.queue[0]
 		elif rcvmsg == 'getranking':

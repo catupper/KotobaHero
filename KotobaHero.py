@@ -1,10 +1,12 @@
-#!/Usre/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import socket
 import pygame
 import threading
 import Queue
+import simplejson
 
 import time
 from time import sleep
@@ -19,123 +21,52 @@ LEAST_LEN = 3
 LEAST_BONUS = 2
 LONGEST_LEN = 6
 
-PLAY_TIME = 1
-SCORE_TIME = 1
-RANK_TIME = 1
-TOTAL_TIME = PLAY_TIME + SCORE_TIME + RANK_TIME
-WHITE = (255, 255, 255)
-RED = (200, 100, 10)
-GREEN = (100, 200, 10)
-YAMABUKI = (200, 200, 100)
-DARK_BLUE = (200, 200, 255)
-SKY_BLUE = (100, 100, 255)
-BLUE = (0, 0, 255)
-BLACK = (0, 0, 0)
-VIOLET = (150, 100, 200)
-LIGHT_BLUE = (150, 255, 255)
-YELLOW = (255, 255, 100)
-BACK_GROUND = (130, 70, 30)
-Dictfile = "dictionary/newdict"
+COLOR = {
+    'WHITE': (255, 255, 255),
+    'RED': (200, 100, 10),
+    'GREEN': (100, 200, 10),
+    'YAMABUKI': (200, 200, 100),
+    'DARK_BLUE': (200, 200, 255),
+    'SKY_BLUE': (100, 100, 255),
+    'BLUE': (0, 0, 255),
+    'BLACK': (0, 0, 0),
+    'VIOLET': (150, 100, 200),
+    'LIGHT_BLUE': (150, 255, 255),
+    'YELLOW': (255, 255, 100),
+    'BACKGROUND': (130, 70, 30)
+}
+
 characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
 charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
 point = [3,1,1,5,3,2,2,1,5,2,4,1,4,4,8,3,4,2,6,3,6,8,12,10,6,7,8,7,12,9,5,6,9,7,8,5,9,10,9,9,11,3,11,12,12,7,13,13,10,6,8,10,7,11,10,11,13,11,13,12,5,4,2,8,1]
-HINSICOLOR = {u"形容動詞語幹":YAMABUKI,
-              u"接尾動詞":VIOLET,
-              u"接続詞":LIGHT_BLUE,
-              u"自立形容詞":YELLOW,
-              u"一般名詞":GREEN,
-              u"接尾名詞":LIGHT_BLUE,
-              u"一般記号":YELLOW,
-              u"非自立動詞":GREEN,
-              u"副詞可能名詞":LIGHT_BLUE,
-              u"アルファベット":YELLOW,
-              u"非自立形容詞":YELLOW,
-              u"接尾形容詞":YELLOW,
-              u"ナイ形容詞語幹":RED,
-              u"助詞類接続副詞":BLUE,
-              u"一般副詞":BLUE,
-              u"サ変接続名詞":RED,
-              u"固有名詞":RED,
-              u"自立動詞":GREEN,
-              u"連体詞":RED,}
-host = 'npca.jp'
+HINSICOLOR = {
+    u'形容動詞語幹': 'YAMABUKI',
+    u'接尾動詞': 'VIOLET',
+    u'接続詞': 'LIGHT_BLUE',
+    u'自立形容詞': 'YELLOW',
+    u'一般名詞': 'GREEN',
+    u'接尾名詞': 'LIGHT_BLUE',
+    u'一般記号': 'YELLOW',
+    u'非自立動詞': 'GREEN',
+    u'副詞可能名詞': 'LIGHT_BLUE',
+    u'アルファベット': 'YELLOW',
+    u'非自立形容詞': 'YELLOW',
+    u'接尾形容詞': 'YELLOW',
+    u'ナイ形容詞語幹': 'RED',
+    u'助詞類接続副詞': 'BLUE',
+    u'一般副詞': 'BLUE',
+    u'サ変接続名詞': 'RED',
+    u'固有名詞': 'RED',
+    u'自立動詞': 'GREEN',
+    u'連体詞': 'RED'
+}
+host = '192.168.1.51'
 port = 11123
-
-##終了条件
-def quitcheck(events = None):
-    if events == None:
-        events = pygame.event.get()
-    for event in events:
-        if event.type == QUIT:
-            exit()
-        if event.type == KEYDOWN and event.key  == K_ESCAPE:
-            exit()
-
-#画像をゲット
-def getimages():
-    global foundwordback, under_field, allwordsback, wordinfoback, gameinfoback, myinfoback, playinfoback
-    foundwordback = pygame.image.load("images/foundwords.png")
-    under_field   = pygame.image.load("images/under_field.png")
-    allwordsback  = pygame.image.load("images/foundwordback.png")
-    wordinfoback  = pygame.image.load("images/wordinformation.png")
-    gameinfoback  = pygame.image.load("images/gameinfo.png")
-    myinfoback    = pygame.image.load("images/myinfo.png")
-    playinfoback  = pygame.image.load("images/playwords.png")
 
 ##時間をゲット
 def get_time():
     global TIME_GAP
     return time.time() + TIME_GAP
-
-
-##名前をゲット
-def get_name():
-    inputs = ""
-    keys = ['K_a','K_b','K_c','K_d','K_e','K_f','K_g','K_h','K_i','K_j','K_k','K_l','K_m','K_n','K_o','K_p','K_q','K_r','K_s','K_t','K_u','K_v','K_w','K_x','K_y','K_z','K_0','K_1','K_2','K_3','K_4','K_5','K_6','K_7','K_8','K_9']
-    pressed = pygame.key.get_pressed()
-    while True:
-        now_pressed = pygame.key.get_pressed()
-        screen.fill(BACK_GROUND)
-        screen.blit(sysfont[2].render(u"名前:%s" % inputs, False, WHITE)
-                    ,(100,100))
-        for key in keys:
-            if key == 'K_BACKSPACE':continue
-            r = eval(key)
-            if not pressed[r] and now_pressed[r]:
-                g = key[-1]
-                if now_pressed[K_RSHIFT] or now_pressed[K_LSHIFT]:
-                    g = g.upper()
-                inputs += g
-        if not pressed[K_BACKSPACE] and now_pressed[K_BACKSPACE]:
-            inputs = inputs[:-1]
-        if now_pressed[K_RETURN] and inputs != "":
-            break      
-        inputs = inputs[:15]
-        real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))      
-        pygame.display.flip()
-        quitcheck()
-        pressed = now_pressed[:]
-
-    return inputs
-
-
-##辞書作成
-def makedic(filename):
-    global WORD__, WORDLIST, WORDLIST_HINSI, WORDLIST_ORIGIN
-    f = open(filename, "r")
-    res = set()
-    for x in f:
-        x = x.strip()
-        if len(x.decode('utf-8').split(',')[0]) >= LEAST_LEN :
-            res.add(x.decode('utf-8'))
-    WORD__ = sorted(list(set(res)))
-    WORDLIST = map(lambda x:x.split(',')[0], WORD__)
-    WORDLIST_HINSI = {}
-    WORDLIST_ORIGIN = {}
-    for x in WORD__:
-        k = x.split(',')
-        WORDLIST_HINSI[k[0]] = k[-1]
-        WORDLIST_ORIGIN[k[0]] = k[1]
 
 ##16マスの隣接リスト
 def sixteenmap():
@@ -447,52 +378,8 @@ def outputmystatus(myrank, point, length):
     screen.blit(tmp, (525, 25))
 
 #開始待ち
-def waitfor(time):
-    gt = get_time()
-    board, lists = 0,0   
-    gotten = False
-    waitpleas = map(lambda x: [pygame.transform.scale(
-            pygame.image.load("images/%s.png"%x),
-            (100,100)),
-                               pygame.transform.scale(
-                pygame.image.load("images/%sGreen.png"%x),
-            (100,100))]
-                    ,['ti','yo','tu','to','ma','tu','te','ne'])
-    while gt < time:
-        gt = int(gt * 4)%8
-        screen.fill(BACK_GROUND)
-        screen.blit(sysfont[5].render("Please wait"+'.'*(gt%4), False, DARK_BLUE),(140,500))
-
-        wp = range(8)
-        for x in xrange(8):
-            if( gt == x):
-                wp[x] = waitpleas[x][1]
-            else:
-                wp[x] = waitpleas[x][0]
-            
-        screen.blit(wp[0],(100,100))
-        screen.blit(wp[1],(210,100))
-        screen.blit(wp[2],(320,100))
-        screen.blit(wp[3],(430,100))
-        screen.blit(wp[4],(120,210))
-        screen.blit(wp[5],(230,210))
-        screen.blit(wp[6],(340,210))
-        screen.blit(wp[7],(450,210))
-        timer(time)
-        real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))
-        pygame.display.flip()
-        quitcheck()
-        gt = get_time()
-        if not gotten and   gt> time - SCORE_TIME:
-            board, lists = getboard()
-            gotten = True
-    return board, lists
 
 #次のゲームの開始時間
-def next_time():
-    time = get_time()
-    g = int(time / TOTAL_TIME)
-    return (g + 1) * TOTAL_TIME
 
 ###あそび
 def play(board, countdown, wordlist):
@@ -735,7 +622,12 @@ def get_ranking(foundword,point,q):
             pass
     comand = 'getranking'
     clientsock.sendall(comand)
-    recm = clientsock.recv(1<<17)
+    recm = ''
+    while True:
+        s = clientsock.recv(1024)
+        if not s:
+            break
+        recm += s
     clientsock.close()
     q.put(eval(recm))
     
@@ -879,57 +771,342 @@ def getboard(q=None):
         try:
             clientsock.connect((host,port))
             clientsock.sendall(comand)
-            recm = clientsock.recv(1<<17)
+            recm = ''
+            while True:
+                s = clientsock.recv(1<<17)
+                print s
+                if not s:
+                    break
+                recm += s
+            print recm
             clientsock.close()
             rcvmsg = recm.strip()
-            board,wordlist = rcvmsg.split('|')
+            board, wordlist = map(eval, rcvmsg.split('|'))
             break
         except:
             pass
 
         
     if q == None:
-        return eval(board), eval(wordlist)
+        return board, wordlist
     else:
-        q.puts([eval(board), eval(wordlist)])
+        q.puts([board, wordlist])
 
-def gettime_gap(q=None):
-    global PLAY_TIME, SCORE_TIME, RANK_TIME, TOTAL_TIME
-    clientsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while True:
-        try:
-            clientsock.connect((host,port))
-            break
-        except:
-            pass
-    comand = 'gettime'
-    clientsock.sendall(comand)
-    recm = clientsock.recv(1024)
-    clientsock.close()
-    rcvmsg = recm.strip()
-    server_time, PLAY_TIME, SCORE_TIME, RANK_TIME = map(eval, rcvmsg.split(','))
-    TOTAL_TIME = PLAY_TIME + SCORE_TIME + RANK_TIME
-    gap = server_time - time.time()
-    if q == None:
-        return gap
-    else:
-        q.puts([gap])
+class ServerConnection():
+    def __init__(self, host, port):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((host, port))
 
+    def sendCommand(self, command):
+        self.socket.sendall(command)
+
+        res = ''
+        while True:
+            s = self.socket.recv(1024)
+            if not s:
+                break
+            res += s
+        return simplejson.loads(res.strip())
+
+class Game(threading.Thread):
+    def __init__(self, basepath):
+        self.socket = ServerConnection(host, port)
+        self.setTime()
+        self.loadDict(basepath + '/dictonary/newdict')
+
+        self.board = None
+        self.wordlist = None
+
+        self.UI = UI()
+
+    def setTime(self):
+        response = self.socket.sendCommand('gettime')
+
+        self.TIME_GAP = response['TIME'] - time.time()
+        self.PLAY_TIME = response['PLAY_TIME']
+        self.SCORE_TIME = response['SCORE_TIME']
+        self.RANK_TIME = response['RANK_TIME']
+
+    def getBoard(self):
+        response = self.socket.sendCommand('getboard')
+
+        self.board = response['BOARD']
+        self.wordlist = response['WORDLIST']
+
+    def getNextTurn(self):
+        total = self.PLAY_TIME + self.SCORE_TIME + self.RANK_TIME
+        turn = (time.time() + self.TIME_GAP) / total
+        return (turn + 1) * total
+
+    def loadDict(self, filename):
+        f = open(filename, 'r')
+
+        res = set()
+        for i in f:
+            line = i.strip().decode('UTF-8')
+            if len(line.split(',')[0]) < LEAST_LEN :
+                continue
+            res.add(line)
+
+        self.wordlist.hinsi = {}
+        self.wordlist.origin = {}
+        for line in sorted(list(set(res))):
+            word = line.split(',')
+            self.wordlist.hinsh[word[0]] = word[-1]
+            self.wordlist.origin[word[0]] = word[1]
+
+    def playGame(self):
+        wordlists = sorted([word[0] for word in self.wordlist])
+
+        nowword = []
+        foundword = []
+        mouse_pressed = False
+        sx=sixteenmap()
+        square = [swit(x / 4, x % 4, board[x], point[characters.index(board[x])], (220, 30)) for x in xrange(16)]
+        used = [False] * len(wordlists)
+        checking = False
+        finish_time = next_time() - RANK_TIME - SCORE_TIME 
+        nowpoint = 0
+        bonus1 = False
+        bonus2 = False
+        lastword = 'NIL'
+        lastlimit = 0
+
+        while get_time() < finish_time:
+            gt = get_time()
+            screen.fill(BACK_GROUND)
+            clock.tick(60)
+            timer(finish_time)
+            mouse_press=pygame.mouse.get_pressed()[0]
+            if mouse_pressed == True and mouse_press == False or checking:
+                p=search(ind_word(board, nowword), wordlists, used)
+                if p == 1:
+                    foundword = [["".join(board[x] for x in  nowword)]] + foundword
+                    nowpoint += wordpoint("".join(board[x] for x in nowword))
+                    lastword = ind_word(board, nowword)
+
+                    lastlimit = gt + 0.1
+                for x in xrange(16):
+                    if square[x].mode == 1:
+                        if p == 1:
+                            square[x].mode = 102
+                            square[x].limit = gt + 0.4
+                            square[x].used += 1
+                        elif p == 3:
+                            square[x].mode = 104
+                            square[x].limit = gt + 0.4
+                        else:
+                            square[x].mode = 103
+                            square[x].limit = gt + 0.4
+                nowword = []
+                checking = False
+        
+            else:
+                mouse_pressed = mouse_press
+                if mouse_pressed:
+                    x, y = pygame.mouse.get_pos()
+                    x = x * 800 / WIDTH
+                    y = y * 700 /HEIGHT
+                    x -= 220
+                    y -= 30
+                    xx, yy = x, y
+                    x /= Square_size
+                    y /= Square_size
+                    xx %= Square_size
+                    yy %= Square_size
+                    if 0 <= x < 4 and 0 <= y < 4:
+                        if 25 < xx < 125 and 25 < yy < 125:
+                            if square[x*4+y].mode == 0:
+                                while len(nowword) > 0 and x * 4 + y not in sx[nowword[-1]]:
+                                    square[nowword[-1]].mode = 0
+                                    del nowword[-1]                
+                                square[x * 4 + y].mode = 1
+                            nowword.append(x * 4 + y)
+                            elif square[x * 4 + y].mode == 1:
+                                if len(nowword) > 1 and nowword[-2] == x * 4 + y:
+                                    square[nowword[-1]].mode = 0
+                                    del nowword[-1]
+                    else:
+                        checking = True
+            if not bonus1:
+                for x in xrange(16):
+                    if square[x].used == 0:break
+                else:
+                    bonus1 = True
+                    nowpoint += 25
+                    foundword = [["Bonus", 25]] + foundword
+            if bonus1 and not bonus2:
+                for x in xrange(16):
+                    if square[x].used == 1:break
+                else:
+                    bonus2 = True
+                    nowpoint += 100
+                    foundword = [["Bonus", 100]] + foundword
+            for x in xrange(16):
+                square[x].update(gt)
+                square[x].draw(screen)
+            screen.blit(foundwordback, (0, 30))
+            screen.blit(under_field, (0, 580))
+            outputfoundword(lastword, lastlimit - gt)
+            pointer(nowpoint)
+            putword(board, nowword)
+            outputwords(foundword, (10, 90), 10, 2, SKY_BLUE)
+            real_screen.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)),(0,0))
+            pygame.display.flip()
+            quitcheck()
+        return nowpoint, foundword
+
+    def run(self):
+        self.UI.start()
+
+        user_name = self.UI.getName()
+        self.nextTurn = self.getNextTurn()
+
+        loading = self.UI.Loading()
+        loading.start()
+        while time.time() + self.TIME_GAP < self.nextTurn:
+            if not self.board and not self.wordlist:
+                self.getBoard()
+        loading.terminate()
+
+        while True:
+            playGame()
+            p = threading.Thread(target = get_ranking,args = (foundword,playpoint,q,))
+            p.start()
+            score(board, lists, playpoint, foundword)
+            rank = q.get()
+            print rank
+            ranking(board, lists, playpoint, foundword, rank)
+            board, lists = getboard()
+
+    class UI(threading.Thread):    
+        def __init__(self, basepath):    
+            threading.Thread.__init__(self)    
+        
+            self.basePath = basepath    
+            self.panelSize = BOARD_SIZE / 4    
+        
+            self.loadBackground()    
+            self.loadFont()    
+        
+        def getPath(self, filename):    
+            return self.basePath + '/' + filename    
+        
+        def loadBackground(self):    
+            self.background.foundWord = pygame.image.load(self.getPath('images/foundwords.png'))    
+            self.background.underFrame = pygame.image.load(self.getPath('images/under_field.png'))    
+            self.background.allWords = pygame.image.load(self.getPath('images/foundwordback.png'))    
+            self.background.wordInfo = pygame.image.load(self.getPath('images/wordinformation.png'))    
+            self.background.gameInfo = pygame.image.load(self.getPath('images/gameinfo.png'))    
+            self.background.playerInfo = pygame.image.load(self.getPath('images/playerinfo.png'))    
+            self.background.playInfo = pygame.image.load(self.getPath('images/playwords.png'))    
+        
+        def loadFont(self):    
+            self.sysfont = [pygame.font.Font(self.getPath('font/ume-tgc5.tff', 5))]    
+            for i in range(10, 200, 10):    
+                self.sysfont.append(pygame.font.Font(self.getPath('font/ume-tgc5.ttf'), i))    
+        
+            self.numfont = [pygame.font.Font(self.getPath('font/ipag.ttf', 5))]    
+            for i in range(10, 200, 10):    
+                self.numfont.append(pygame.font.Font(self.getPath('font/ipag.ttf'), i))    
+        
+        def getName(self):    
+            inputs = ''    
+            keys = [eval('pygame.locals.K_' + chr(i)) for i in range(ord('0'), ord('9') + 1) + range(ord('a'), ord('z') + 1)]    
+            pressed = pygame.key.get_pressed()    
+        
+            while True:    
+                now_pressed = pygame.key.get_pressed()    
+                self.screen.fill(COLOR['BACKGROUND'])    
+                self.screen.blit(self.sysfont[2].render(u"名前:%s" % inputs, False, COLOR['WHITE']), (100, 100))    
+        
+                for key in keys:    
+                    if key == pygame.locals.K_BACKSPACE:    
+                        continue    
+                    if not pressed[key] and now_pressed[key]:    
+                        char = key[-1]    
+                        if now_pressed[pygame.locals.K_RSHIFT] or now_pressed[pygame.locals.K_LSHIFT]:    
+                            char = char.upper()    
+                        inputs += char    
+        
+                if not pressed[pygame.locals.K_BACKSPACE] and now_pressed[pygame.locals.K_BACKSPACE]:    
+                    inputs = inputs[:-1]    
+                if now_pressed[pygame.locals.K_RETURN] and inputs != "":    
+                    break    
+        
+                inputs = inputs[:15]    
+                self.window.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)), (0, 0))          
+                pygame.display.flip()    
+        
+                quitcheck()    
+                pressed = now_pressed[:]    
+        
+            return inputs    
+        
+        def run(self):    
+            pygame.init()    
+            self.window = pygame.display.setmode((WIDTH, HEIGHT))    
+            self.screen = pygame.Surface((800, 700))    
+            pygame.display.set_caption("Kotoba Hero")    
+        
+            while True:    
+                remainingTime = int(Game.nextTurn - time.time() - self.TIME_GAP)    
+                color = COLOR['SKY_BLUE']    
+                if time < 10:    
+                    color = COLOR['RED']    
+                self.screen.blit(self.sysfont[2].render(u"残り%d秒" % time, False, color), (650, 0))    
+        
+                events = pygame.event.get()    
+                for event in events:    
+                    if event.type == pygame.locals.QUIT:    
+                        exit()    
+                if event.type == pygame.locals.KEYDOWN and event.key == pygame.locals.K_ESCAPE:    
+                    exit()    
+        
+        class Loading(threading.Thread):    
+            def __init__(self):    
+                threading.Thread.__init__(self)    
+        
+                self.panels = []    
+                for i in list(u'ちよつとまつてね'):    
+                    normal = pygame.image.load(UI.getPath('images/%s.png') % x)    
+                    green = pygame.image.load(UI.getPath('images/%sGreen.png') % x)    
+                    UI.panels.append([pygame.transform.scale(j, (100, 100)) for j in [normal, green]])    
+        
+                self.running = True    
+        
+            def terminate(self):    
+                self.running = False    
+        
+            def run(self, time):    
+                count = 0    
+        
+                while self.running:    
+                    UI.screen.fill(COLOR['BACKGROUND'])    
+                    UI.screen.blit(UI.sysfont[5].render('Please wait' + '.' * (count % 4), False, COLOR['DARK_BLUE']), (140, 500))    
+        
+                for i in range(8):    
+                    if i == count:    
+                        panel = self.panels[i][1]    
+                    else:    
+                        panel = self.panels[i][0]    
+        
+                    if i < 5:    
+                        UI.screen.blit(panel, (100 + 110 * i, 100))    
+                    else:    
+                        UI.screen.blit(panel, (100 + 110 * (i - 5), 210))    
+            
+                UI.window.blit(pygame.transform.scale(UI.screen, (WIDTH, HEIGHT)), (0, 0))    
 
 
 def main():
-    global screen,sysfont,numfont,Square_size,clock,user_name,real_screen,TIME_GAP
-    TIME_GAP = gettime_gap()
-    getimages()
-    makedic(Dictfile)
+    game = Game(os.path.dirname(os.path.abspath(__file__)))
+    game.start()
+
     pygame.init()
     real_screen = pygame.display.set_mode( (WIDTH, HEIGHT) )
     screen = pygame.Surface((800, 700), flags=0)
-    pygame.display.set_caption("Kotoba Hero")
-    sysfont =[ pygame.font.Font("font/ume-tgc5.ttf", x) for x in xrange(10, 200, 10)] + [ pygame.font.Font("font/ume-tgc5.ttf", 5)]
-    numfont = [ pygame.font.Font("font/ipag.ttf", x ) for x in xrange(10, 200, 10)] + [ pygame.font.Font("font/ipag.ttf", 5)]
     clock = pygame.time.Clock()
-    Square_size = 550 / 4
     user_name = get_name()
     board, lists = waitfor(next_time())
     q = Queue.Queue()
