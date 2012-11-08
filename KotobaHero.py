@@ -35,9 +35,9 @@ LIGHT_BLUE = (150, 255, 255)
 YELLOW = (255, 255, 100)
 BACK_GROUND = (130, 70, 30)
 Dictfile = "dictionary/newdict"
-characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
-charo = [x + y  for x in "akstnhmgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
-point = [3,1,1,5,3,2,2,1,5,2,4,1,4,4,8,3,4,2,6,3,6,8,12,10,6,7,8,7,12,9,5,6,9,7,8,5,9,10,9,9,11,3,11,12,12,7,13,13,10,6,8,10,7,11,10,11,13,11,13,12,5,4,2,8,1]
+characters = list( u"あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもらりるれろがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽやゆよわん" )
+charo = [x + y  for x in "akstnhmrgzdbp" for y in "aiueo"] + ["ya","yu","yo","wa","nn"]
+point = [3,1,1,5,3,2,2,1,5,2,4,1,4,4,8,3,4,2,6,3,6,8,12,10,6,7,8,7,12,9,5,6,9,7,8,11,6,14,10,9,5,9,10,9,9,11,3,11,12,12,7,13,13,10,6,8,10,7,11,10,11,13,11,13,12,5,4,2,8,1]
 HINSICOLOR = {u"形容動詞語幹":YAMABUKI,
               u"接尾動詞":VIOLET,
               u"接続詞":LIGHT_BLUE,
@@ -323,13 +323,15 @@ def scrolloutputrank(rank, pos, scroll):
     nums = 700 / 35
     height = -scroll
     k = 0
+    for x in xrange(len(rank)):
+        if rank[x]['user_name'] == user_name:
+            res = rank[x]
+            res['rank'] = x
     while height <= 650 and k < len(rank):
         size = 2
         color = SKY_BLUE
-        if rank[k]['user_name'] == user_name:
+        if k == res['rank']:
             color = YAMABUKI
-            res = rank[k]
-            res['rank'] = k
         tmp.blit(
             sysfont[2].render(u"%d位" % (k + 1),
             False, color),
