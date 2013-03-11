@@ -10,7 +10,7 @@ import threading
 import traceback
 import simplejson
 
-HOST = '0.0.0.0'
+HOST = 'localhost'
 PORT = 11123
 
 LEAST_LEN = 3

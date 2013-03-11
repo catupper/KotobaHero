@@ -57,7 +57,7 @@ HINSICOLOR = {u"形容動詞語幹":YAMABUKI,
               u"固有名詞":RED,
               u"自立動詞":GREEN,
               u"連体詞":RED,}
-host = 'npca.jp'
+host = 'localhost'
 port = 11123
 
 ##終了条件
@@ -207,7 +207,7 @@ def outputfoundword(lastword, pos):
                 ,(110 - pos, 663))
     size = 4
     while (size + 1) * 10 * len(WORDLIST_ORIGIN[lastword]) > 110:size-=1
-    screen.blit(sysfont[4].render(WORDLIST_ORIGIN[lastword], False, color)
+    screen.blit(sysfont[size].render(WORDLIST_ORIGIN[lastword], False, color)
                 ,(110 - pos, 613))
     screen.blit(sysfont[2].render(WORDLIST_HINSI[lastword], False, color)
                 ,(110 - pos, 583))
