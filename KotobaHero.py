@@ -895,14 +895,10 @@ def getboard(q=None):
                 recm += s
             clientsock.close()
             rcvmsg = recm.strip()
-<<<<<<< HEAD:KotobaHero_Servrsion.py
-            print rcvmsg
-            board,wordlist = map(eval, rcvmsg.split('|'))
-=======
             rcv = simplejson.loads(rcvmsg)
             board = rcv['BOARD']
             wordlist = rcv['WORDLIST']
->>>>>>> f6de1a893029bcbe35de9c2e7f24f412fee70c47:KotobaHero.py
+
             break
         except:
             pass
