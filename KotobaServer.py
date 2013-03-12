@@ -16,11 +16,11 @@ PORT = 11123
 LEAST_LEN = 3
 LEAST_BONUS = 2
 LONGEST_LEN = 6
-
+Festival = False
 PLAY_TIME = 150
 SCORE_TIME = 20
 RANK_TIME = 10
-
+resss = 0
 dictfile =  'dictionary/newdict'
 characters = {
     u'あ':  3, u'い':  1, u'う':  1, u'え':  5, u'お':  3,
@@ -39,6 +39,7 @@ characters = {
     u'や':  5, u'ゆ':  4, u'よ':  2, u'わ':  8, u'ん':  1
 }
 
+f = open("festival_data.ac", "a")
 class BoardGenerator(threading.Thread):
     def __init__(self, queue, adjacent, wordlist):
         threading.Thread.__init__(self)
@@ -127,6 +128,7 @@ class BoardGenerator(threading.Thread):
         return ret, longest
 
     def run(self):
+        resss = 0
         while True:
             board = [random.choice(characters.keys()) for x in range(16)]
             wordlist, longest = self.getWordlist(board)
@@ -134,6 +136,10 @@ class BoardGenerator(threading.Thread):
                 continue
             if min([len(word) for word in wordlist]) < LEAST_BONUS:
                 continue
+            f.write(repr({'BOARD': board, 'WORDLIST': wordlist}) + '\n')
+            eval(repr({'BOARD': board, 'WORDLIST': wordlist}))
+            print resss
+            resss += 1
             self.queue.append({'BOARD': board, 'WORDLIST': wordlist})
 
 class GameManager(threading.Thread):
@@ -226,10 +232,19 @@ def main():
     queue = []
     adjacent = makeAdjacent()
     wordlist = loadDict(os.path.dirname(os.path.abspath(__file__)) + '/' + dictfile)
-
-    thread = [BoardGenerator(queue, adjacent, wordlist) for i in range(2)]
-    for i in thread:
-        i.start()
+    if Festival:
+        f = open("festival_data.ac", "r")
+        for x in f:
+            x = x.strip()
+            try:exec(x)
+            except:continue
+            print '1'
+            queue += [eval(x)]
+    else:
+        thread = [BoardGenerator(queue, adjacent, wordlist) for i in range(2)]
+        for i in thread:
+            i.start()
+    
 
     while True:
         if len(queue) > 3:
